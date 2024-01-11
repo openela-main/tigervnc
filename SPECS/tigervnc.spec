@@ -4,13 +4,13 @@
 %global modulename vncsession
 
 Name:           tigervnc
-Version:        1.12.0
-Release:        13%{?dist}
+Version:        1.13.1
+Release:        2%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
 
-License:        GPLv2+
+License:        GPL-2.0-or-later
 URL:            http://www.tigervnc.com
 
 Source0:        %{name}-%{version}.tar.gz
@@ -23,49 +23,62 @@ Source5:        vncserver
 
 # Downstream patches
 Patch1:         tigervnc-use-gnome-as-default-session.patch
+Patch2:         tigervnc-vncsession-restore-script-systemd-service.patch
 
 # Upstream patches
-Patch50:        tigervnc-selinux-restore-context-in-case-of-different-policies.patch
-Patch51:        tigervnc-fix-typo-in-mirror-monitor-detection.patch
-Patch52:        tigervnc-root-user-selinux-context.patch
-Patch53:        tigervnc-vncsession-restore-script-systemd-service.patch
-# https://github.com/TigerVNC/tigervnc/pull/1513
-Patch54:        tigervnc-fix-ghost-cursor-in-zaphod-mode.patch
-# https://github.com/TigerVNC/tigervnc/pull/1510
-Patch55:        tigervnc-add-new-keycodes-for-unknown-keysyms.patch
-Patch56:        tigervnc-sanity-check-when-cleaning-up-keymap-changes.patch
-Patch57:        tigervnc-selinux-allow-vncsession-create-vnc-directory.patch
 
 # This is tigervnc-%%{version}/unix/xserver116.patch rebased on the latest xorg
 Patch100:       tigervnc-xserver120.patch
 # 1326867 - [RHEL7.3] GLX applications in an Xvnc session fails to start
 Patch101:       0001-rpath-hack.patch
 
-# CVE-2023-1393 tigervnc: xorg-x11-server: X.Org Server Overlay Window Use-After-Free Local Privilege Escalation Vulnerability
-Patch110:       xorg-x11-server-composite-Fix-use-after-free-of-the-COW.patch
-
 BuildRequires:  make
 BuildRequires:  gcc-c++
-BuildRequires:  libX11-devel, automake, autoconf, libtool, gettext, gettext-autopoint
-BuildRequires:  libXext-devel, xorg-x11-server-source, libXi-devel
-BuildRequires:  xorg-x11-xtrans-devel, xorg-x11-util-macros, libXtst-devel
-BuildRequires:  libxkbfile-devel, openssl-devel, libpciaccess-devel
-BuildRequires:  mesa-libGL-devel, libXinerama-devel, xorg-x11-font-utils
-BuildRequires:  freetype-devel, libXdmcp-devel, libxshmfence-devel
-BuildRequires:  libjpeg-turbo-devel, gnutls-devel, pam-devel
-BuildRequires:  libdrm-devel, libXt-devel, pixman-devel, libselinux-devel
-BuildRequires:  systemd, cmake, desktop-file-utils, selinux-policy-devel
-BuildRequires:  libXfixes-devel, libXdamage-devel, libXrandr-devel
-%if 0%{?fedora} > 24 || 0%{?rhel} >= 7
-BuildRequires:  libXfont2-devel
-%else
-BuildRequires:  libXfont-devel
-%endif
+BuildRequires:  gettext
+BuildRequires:  cmake
+
+BuildRequires:  gnutls-devel
+BuildRequires:  desktop-file-utils
+BuildRequires:  libappstream-glib
+BuildRequires:  libjpeg-turbo-devel
+BuildRequires:  openssl-devel
+BuildRequires:  pam-devel
+BuildRequires:  zlib-devel
 
 # TigerVNC 1.4.x requires fltk 1.3.3 for keyboard handling support
 # See https://github.com/TigerVNC/tigervnc/issues/8, also bug #1208814
 BuildRequires:  fltk-devel >= 1.3.3
+BuildRequires:  libX11-devel
+BuildRequires:  libXext-devel
+BuildRequires:  libXi-devel
+BuildRequires:  libXrandr-devel
+BuildRequires:  libXrender-devel
+BuildRequires:  pixman-devel
+
+# X11/graphics dependencies
+BuildRequires:  autoconf
+BuildRequires:  automake
+BuildRequires:  gettext-autopoint
+BuildRequires:  libXdamage-devel
+BuildRequires:  libXdmcp-devel
+BuildRequires:  libXfixes-devel
+BuildRequires:  libXfont2-devel
+BuildRequires:  libXinerama-devel
+BuildRequires:  libXt-devel
+BuildRequires:  libXtst-devel
+BuildRequires:  libdrm-devel
+BuildRequires:  libtool
+BuildRequires:  libxkbfile-devel
+BuildRequires:  libxshmfence-devel
+BuildRequires:  mesa-libGL-devel
+BuildRequires:  xorg-x11-font-utils
 BuildRequires:  xorg-x11-server-devel
+BuildRequires:  xorg-x11-server-source
+BuildRequires:  xorg-x11-util-macros
+BuildRequires:  xorg-x11-xtrans-devel
+
+# SELinux
+BuildRequires:  libselinux-devel, selinux-policy-devel, systemd
 
 Requires(post): coreutils
 Requires(postun):coreutils
@@ -167,20 +180,12 @@ for all in `find . -type f -perm -001`; do
 done
 %patch100 -p1 -b .xserver120-rebased
 %patch101 -p1 -b .rpath
-%patch110 -p1 -b .composite-Fix-use-after-free-of-the-COW
 popd
 
 %patch1 -p1 -b .use-gnome-as-default-session
+%patch2 -p1 -b .vncsession-restore-script-systemd-service
 
 # Upstream patches
-%patch50 -p1 -b .selinux-restore-context-in-case-of-different-policies
-%patch51 -p1 -b .fix-typo-in-mirror-monitor-detection
-%patch52 -p1 -b .root-user-selinux-context
-%patch53 -p1 -b .vncsession-restore-script-systemd-service
-%patch54 -p1 -b .fix-ghost-cursor-in-zaphod-mode
-%patch55 -p1 -b .add-new-keycodes-for-unknown-keysyms
-%patch56 -p1 -b .sanity-check-when-cleaning-up-keymap-changes
-%patch57 -p1 -b .selinux-allow-vncsession-create-vnc-directory
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -260,10 +265,13 @@ install -m644 %{SOURCE2} %{buildroot}%{_unitdir}/xvnc.socket
 mkdir -p %{buildroot}%{_datadir}/icons/hicolor/{16x16,24x24,48x48}/apps
 
 pushd media/icons
-for s in 16 24 48; do
+for s in 16 22 24 32 48 64 128; do
 install -m644 tigervnc_$s.png %{buildroot}%{_datadir}/icons/hicolor/${s}x$s/apps/tigervnc.png
 done
 popd
+
+appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/org.tigervnc.vncviewer.metainfo.xml
+desktop-file-validate %{buildroot}%{_datadir}/applications/vncviewer.desktop
 
 %if 0%{?rhel} > 9
 # Install a replacement for /usr/bin/vncserver which will tell the user to read the
@@ -316,6 +324,7 @@ fi
 %{_bindir}/vncviewer
 %{_datadir}/applications/*
 %{_mandir}/man1/vncviewer.1*
+%{_datadir}/metainfo/org.tigervnc.vncviewer.metainfo.xml
 
 %files server
 %config(noreplace) %{_sysconfdir}/pam.d/tigervnc
@@ -359,9 +368,14 @@ fi
 %ghost %verify(not md5 size mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
-*Mon Mar 27 2023 Jan Grulich <jgrulich@redhat.com> - 1.12.0-13
-- xorg-x11-server: X.Org Server Overlay Window Use-After-Free Local Privilege Escalation Vulnerability
-  Resolves: bz#2180309
+* Tue Apr 11 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-2
+- xorg-x11-server: X.Org Server Overlay Window Use-After-Free Local Privilege
+  Escalation Vulnerability
+  Resolves: bz#2180310
+
+* Tue Mar 21 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-1
+- 1.13.1
+  Resolves: bz#2175732
 
 * Tue Feb 21 2023 Jan Grulich <jgrulich@redhat.com> - 1.12.0-12
 - SELinux: allow vncsession create .vnc directory
