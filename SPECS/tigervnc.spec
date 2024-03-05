@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.13.1
-Release:        2%{?dist}
+Release:        2%{?dist}.7
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -28,12 +28,29 @@ Patch3:         tigervnc-dont-install-appstream-metadata-file.patch
 
 # Upstream patches
 
+# Upstreamable patches
+Patch80:        tigervnc-dont-get-pointer-position-for-floating-device.patch
+
 # This is tigervnc-%%{version}/unix/xserver116.patch rebased on the latest xorg
 Patch100:       tigervnc-xserver120.patch
 # 1326867 - [RHEL7.3] GLX applications in an Xvnc session fails to start
 Patch101:       0001-rpath-hack.patch
 
-# Upstreamable patches
+# Xorg CVEs
+Patch200:       xorg-CVE-2023-5367.patch
+Patch201:       xorg-CVE-2023-5380.patch
+Patch202:       xorg-CVE-2023-6377.patch
+Patch203:       xorg-CVE-2023-6478.patch
+Patch204:       xorg-CVE-2023-6816.patch
+Patch205:       xorg-CVE-2024-0229-1.patch
+Patch206:       xorg-CVE-2024-0229-2.patch
+Patch207:       xorg-CVE-2024-0229-3.patch
+Patch208:       xorg-CVE-2024-21885.patch
+Patch209:       xorg-CVE-2024-21886-1.patch
+Patch210:       xorg-CVE-2024-21886-2.patch
+# Related to CVE-2024-21886
+Patch211:       xorg-dix-fix-use-after-free-in-input-device-shutdown.patch
+
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -157,15 +174,20 @@ This package contains icons for TigerVNC viewer
 %package selinux
 Summary:        SELinux module for TigerVNC
 BuildArch:      noarch
+BuildRequires:  pkgconfig(systemd)
+BuildRequires:  selinux-policy
 BuildRequires:  selinux-policy-devel
-Requires:       selinux-policy-%{selinuxtype}
-Requires(post): selinux-policy-%{selinuxtype}
-BuildRequires:  selinux-policy-devel
-# Required for matchpathcon
-Requires:       libselinux-utils
 # Required for restorecon
 Requires:       policycoreutils
-%{?selinux_requires}
+# Required for matchpathcon
+Requires:       libselinux-utils
+Requires:       selinux-policy
+Requires:       selinux-policy-%{selinuxtype}
+Requires(post): selinux-policy-base
+Requires(post): selinux-policy-%{selinuxtype}
+Requires(post): libselinux-utils
+Requires(post): policycoreutils
+Requires(post): policycoreutils-python-utils
 
 %description selinux
 This package provides the SELinux policy module to ensure TigerVNC
@@ -181,11 +203,26 @@ for all in `find . -type f -perm -001`; do
 done
 %patch100 -p1 -b .xserver120-rebased
 %patch101 -p1 -b .rpath
+%patch200 -p1 -b .xorg-CVE-2023-5367
+%patch201 -p1 -b .xorg-CVE-2023-5380
+%patch202 -p1 -b .xorg-CVE-2023-6377
+%patch203 -p1 -b .xorg-CVE-2023-6478
+%patch204 -p1 -b .xorg-CVE-2023-6816
+%patch205 -p1 -b .xorg-CVE-2024-0229-1
+%patch206 -p1 -b .xorg-CVE-2024-0229-2
+%patch207 -p1 -b .xorg-CVE-2024-0229-3
+%patch208 -p1 -b .xorg-CVE-2024-21885
+%patch209 -p1 -b .xorg-CVE-2024-21886-1
+%patch210 -p1 -b .xorg-CVE-2024-21886-2
+%patch211 -p1 -b .xorg-dix-fix-use-after-free-in-input-device-shutdown
 popd
 
 %patch1 -p1 -b .use-gnome-as-default-session
 %patch2 -p1 -b .vncsession-restore-script-systemd-service
 %patch3 -p1 -b .dont-install-appstream-metadata-file.patch
+
+# Upstreamable patches
+%patch80 -p1 -b .dont-get-pointer-position-for-floating-device
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -337,9 +374,49 @@ fi
 
 %files selinux
 %{_datadir}/selinux/packages/%{selinuxtype}/%{modulename}.pp.*
-%ghost %verify(not md5 size mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
+%ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Thu Jan 25 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3.7
+- Fix use after free related to CVE-2024-21886
+  Resolves: RHEL-20432
+- Fix copy/paste error in the DeviceStateNotify
+  Resolves: RHEL-20583
+
+* Fri Jan 19 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3.6
+- Don't try to get pointer position when the pointer becomes a floating device
+  Resolves: RHEL-20432
+
+* Fri Jan 12 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3.5
+- Fix CVE-2024-21886 tigervnc: xorg-x11-server: heap buffer overflow in DisableDevice
+  Resolves: RHEL-20432
+- Fix CVE-2024-21885 tigervnc: xorg-x11-server: heap buffer overflow in XISendDeviceHierarchyEvent
+  Resolves: RHEL-20420
+- Fix CVE-2024-0229 tigervnc: xorg-x11-server: reattaching to different master device may lead to out-of-bounds memory access
+  Resolves: RHEL-20583
+- Fix CVE-2023-6816 tigervnc: xorg-x11-server: Heap buffer overflow in DeviceFocusEvent and ProcXIQueryPointer
+  Resolves: RHEL-21252
+
+* Wed Dec 13 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-2.4
+- Updated fix for CVE-2023-6377 tigervnc: xorg-x11-server: out-of-bounds memory reads/writes in XKB button actions
+  Resolves: RHEL-18409
+
+* Mon Dec 11 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-2.3
+- Rebuild (selinux-policy)
+  Resolves: RHEL-18409
+  Resolves: RHEL-18421
+
+* Thu Dec 07 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-2.2
+- Fix CVE-2023-6377 tigervnc: xorg-x11-server: out-of-bounds memory reads/writes in XKB button actions
+  Resolves: RHEL-18409
+- Fix CVE-2023-6478 tigervnc: xorg-x11-server: out-of-bounds memory read in RRChangeOutputProperty and RRChangeProviderProperty
+  Resolves: RHEL-18421
+
+* Wed Nov 01 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-2.1
+- Fix CVE-2023-5380 tigervnc: xorg-x11-server: Use-after-free bug in DestroyWindow
+- Fix CVE-2023-5367 tigervnc: xorg-x11-server: Out-of-bounds write in XIChangeDeviceProperty/RRChangeOutputProperty
+  Resolves: RHEL-15229
+
 * Tue Apr 11 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-2
 - xorg-x11-server: X.Org Server Overlay Window Use-After-Free Local Privilege
   Escalation Vulnerability
