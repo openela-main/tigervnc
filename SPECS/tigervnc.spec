@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.13.1
-Release:        2%{?dist}.7
+Release:        2%{?dist}.10
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -50,7 +50,11 @@ Patch209:       xorg-CVE-2024-21886-1.patch
 Patch210:       xorg-CVE-2024-21886-2.patch
 # Related to CVE-2024-21886
 Patch211:       xorg-dix-fix-use-after-free-in-input-device-shutdown.patch
-
+Patch212:       xorg-CVE-2024-31080.patch
+Patch213:       xorg-CVE-2024-31081.patch
+Patch214:       xorg-CVE-2024-31082.patch
+Patch215:       xorg-CVE-2024-31083.patch
+Patch216:       xorg-CVE-2024-31083-followup.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -215,6 +219,11 @@ done
 %patch209 -p1 -b .xorg-CVE-2024-21886-1
 %patch210 -p1 -b .xorg-CVE-2024-21886-2
 %patch211 -p1 -b .xorg-dix-fix-use-after-free-in-input-device-shutdown
+%patch212 -p1 -b .xorg-CVE-2024-31080.patch
+%patch213 -p1 -b .xorg-CVE-2024-31081.patch
+%patch214 -p1 -b .xorg-CVE-2024-31082.patch
+%patch215 -p1 -b .xorg-CVE-2024-31083.patch
+%patch216 -p1 -b .xorg-CVE-2024-31083-followup
 popd
 
 %patch1 -p1 -b .use-gnome-as-default-session
@@ -377,6 +386,24 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Fri Apr 12 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-2.10
+- Fix crash caused by fix for CVE-2024-31083
+  Resolves: RHEL-30981
+
+* Thu Apr 04 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-2.9
+- Rebuild (z-stream target)
+  Resolves: RHEL-31011
+  Resolves: RHEL-30981
+  Resolves: RHEL-30998
+
+* Thu Apr 04 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-2.8
+- Fix CVE-2024-31080 tigervnc: xorg-x11-server: Heap buffer overread/data leakage in ProcXIGetSelectedEvents
+  Resolves: RHEL-31011
+- Fix CVE-2024-31083 tigervnc: xorg-x11-server: User-after-free in ProcRenderAddGlyphs
+  Resolves: RHEL-30981
+- Fix CVE-2024-31081 tigervnc: xorg-x11-server: Heap buffer overread/data leakage in ProcXIPassiveGrabDevice
+  Resolves: RHEL-30998
+
 * Thu Jan 25 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3.7
 - Fix use after free related to CVE-2024-21886
   Resolves: RHEL-20432
