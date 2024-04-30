@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.13.1
-Release:        8%{?dist}
+Release:        8%{?dist}.3
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -41,6 +41,11 @@ Patch101:       0001-rpath-hack.patch
 # CVE-2024-0229
 # https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1251
 Patch200:       xorg-CVE-2024-0229-followup.patch
+Patch201:       xorg-CVE-2024-31080.patch
+Patch202:       xorg-CVE-2024-31081.patch
+Patch203:       xorg-CVE-2024-31082.patch
+Patch204:       xorg-CVE-2024-31083.patch
+Patch205:       xorg-CVE-2024-31083-followup.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -191,6 +196,11 @@ done
 %patch100 -p1 -b .xserver120-rebased
 %patch101 -p1 -b .rpath
 %patch200 -p1 -b .xorg-CVE-2024-0229-followup
+%patch201 -p1 -b .xorg-CVE-2024-31080.patch
+%patch202 -p1 -b .xorg-CVE-2024-31081.patch
+%patch203 -p1 -b .xorg-CVE-2024-31082.patch
+%patch204 -p1 -b .xorg-CVE-2024-31083.patch
+%patch205 -p1 -b .xorg-CVE-2024-31083-followup
 popd
 
 %patch1 -p1 -b .use-gnome-as-default-session
@@ -384,6 +394,21 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Mon Apr 22 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-8.3
+- Rebuild (z-stream target)
+  Resolves: RHEL-30985
+  Resolves: RHEL-31015
+
+* Fri Apr 12 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-8.2
+- Fix crash caused by fix for CVE-2024-31083
+  Resolves: RHEL-30985
+
+* Thu Apr 04 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-8.1
+- Fix CVE-2024-31080 tigervnc: xorg-x11-server: Heap buffer overread/data leakage in ProcXIGetSelectedEvents
+  Resolves: RHEL-31015
+- Fix CVE-2024-31083 tigervnc: xorg-x11-server: User-after-free in ProcRenderAddGlyphs
+  Resolves: RHEL-30985
+
 * Wed Feb 07 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-8
 - Fix copy/paste error in the DeviceStateNotify
   Resolves: RHEL-20533
