@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.13.1
-Release:        3%{?dist}.6
+Release:        8%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -26,30 +26,21 @@ Patch1:         tigervnc-use-gnome-as-default-session.patch
 Patch2:         tigervnc-vncsession-restore-script-systemd-service.patch
 
 # Upstream patches
+Patch50:        tigervnc-support-username-alias-in-plainusers.patch
+Patch51:        tigervnc-use-dup-to-get-available-fd-for-inetd.patch
 
 # Upstreamable patches
-Patch50:        tigervnc-dont-get-pointer-position-for-floating-device.patch
+Patch80:        tigervnc-dont-get-pointer-position-for-floating-device.patch
 
 # This is tigervnc-%%{version}/unix/xserver116.patch rebased on the latest xorg
 Patch100:       tigervnc-xserver120.patch
 # 1326867 - [RHEL7.3] GLX applications in an Xvnc session fails to start
 Patch101:       0001-rpath-hack.patch
 
-# Xorg CVEs
-Patch200:       xorg-CVE-2023-5367.patch
-Patch201:       xorg-CVE-2023-5380.patch
-Patch202:       xorg-CVE-2023-6377.patch
-Patch203:       xorg-CVE-2023-6478.patch
-Patch204:       xorg-CVE-2023-6816.patch
-Patch205:       xorg-CVE-2024-0229-1.patch
-Patch206:       xorg-CVE-2024-0229-2.patch
-Patch207:       xorg-CVE-2024-0229-3.patch
-Patch208:       xorg-CVE-2024-21885.patch
-Patch209:       xorg-CVE-2024-21886-1.patch
-Patch210:       xorg-CVE-2024-21886-2.patch
-# Related to CVE-2024-21886
-Patch211:       xorg-dix-fix-use-after-free-in-input-device-shutdown.patch
-
+# XServer patches
+# CVE-2024-0229
+# https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1251
+Patch200:       xorg-CVE-2024-0229-followup.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -175,20 +166,15 @@ This package contains icons for TigerVNC viewer
 %package selinux
 Summary:        SELinux module for TigerVNC
 BuildArch:      noarch
-BuildRequires:  pkgconfig(systemd)
-BuildRequires:  selinux-policy
 BuildRequires:  selinux-policy-devel
-# Required for restorecon
-Requires:       policycoreutils
+Requires:       selinux-policy-%{selinuxtype}
+Requires(post): selinux-policy-%{selinuxtype}
+BuildRequires:  selinux-policy-devel
 # Required for matchpathcon
 Requires:       libselinux-utils
-Requires:       selinux-policy
-Requires:       selinux-policy-%{selinuxtype}
-Requires(post): selinux-policy-base
-Requires(post): selinux-policy-%{selinuxtype}
-Requires(post): libselinux-utils
-Requires(post): policycoreutils
-Requires(post): policycoreutils-python-utils
+# Required for restorecon
+Requires:       policycoreutils
+%{?selinux_requires}
 
 %description selinux
 This package provides the SELinux policy module to ensure TigerVNC
@@ -204,27 +190,18 @@ for all in `find . -type f -perm -001`; do
 done
 %patch100 -p1 -b .xserver120-rebased
 %patch101 -p1 -b .rpath
-%patch200 -p1 -b .xorg-CVE-2023-5367
-%patch201 -p1 -b .xorg-CVE-2023-5380
-%patch202 -p1 -b .xorg-CVE-2023-6377
-%patch203 -p1 -b .xorg-CVE-2023-6478
-%patch204 -p1 -b .xorg-CVE-2023-6816
-%patch205 -p1 -b .xorg-CVE-2024-0229-1
-%patch206 -p1 -b .xorg-CVE-2024-0229-2
-%patch207 -p1 -b .xorg-CVE-2024-0229-3
-%patch208 -p1 -b .xorg-CVE-2024-21885
-%patch209 -p1 -b .xorg-CVE-2024-21886-1
-%patch210 -p1 -b .xorg-CVE-2024-21886-2
-%patch211 -p1 -b .xorg-dix-fix-use-after-free-in-input-device-shutdown
+%patch200 -p1 -b .xorg-CVE-2024-0229-followup
 popd
 
 %patch1 -p1 -b .use-gnome-as-default-session
 %patch2 -p1 -b .vncsession-restore-script-systemd-service
 
 # Upstream patches
+%patch50 -p1 -b .support-username-alias-in-plainusers
+%patch51 -p1 -b .use-dup-to-get-available-fd-for-inetd
 
 # Upstreamable patches
-%patch50 -p1 -b .dont-get-pointer-position-for-floating-device
+%patch80 -p1 -b .dont-get-pointer-position-for-floating-device
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -407,45 +384,40 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
-* Thu Jan 25 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3.6
-- Fix use after free related to CVE-2024-21886
-  Resolves: RHEL-20435
+* Wed Feb 07 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-8
 - Fix copy/paste error in the DeviceStateNotify
-  Resolves: RHEL-20586
+  Resolves: RHEL-20533
 
-* Fri Jan 19 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3.5
-- Don't try to get pointer position when the pointer becomes a floating device
-  Resolves: RHEL-20435
-
-* Fri Jan 12 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3.4
+* Mon Jan 22 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-7
 - Fix CVE-2024-21886 tigervnc: xorg-x11-server: heap buffer overflow in DisableDevice
-  Resolves: RHEL-20435
+  Resolves: RHEL-20389
 - Fix CVE-2024-21885 tigervnc: xorg-x11-server: heap buffer overflow in XISendDeviceHierarchyEvent
-  Resolves: RHEL-20424
+  Resolves: RHEL-20383
 - Fix CVE-2024-0229 tigervnc: xorg-x11-server: reattaching to different master device may lead to out-of-bounds memory access
-  Resolves: RHEL-20586
+  Resolves: RHEL-20533
 - Fix CVE-2023-6816 tigervnc: xorg-x11-server: Heap buffer overflow in DeviceFocusEvent and ProcXIQueryPointer
-  Resolves: RHEL-21247
+  Resolves: RHEL-21213
 
-* Wed Dec 13 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3.3
-- Updated fix for CVE-2023-6377 tigervnc: xorg-x11-server: out-of-bounds memory reads/writes in XKB button actions
-  Resolves: RHEL-18413
+* Mon Jan 08 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-6
+- Use dup() to get available file descriptor when using -inetd option
+  Resolves: RHEL-19858
 
-* Mon Dec 11 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3.2
-- Rebuild (selinux-policy)
-  Resolves: RHEL-18413
-  Resolves: RHEL-18425
-
-* Thu Dec 07 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3.1
+* Mon Dec 18 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-5
 - Fix CVE-2023-6377 tigervnc: xorg-x11-server: out-of-bounds memory reads/writes in XKB button actions
-  Resolves: RHEL-18413
+  Resolves: RHEL-18414
 - Fix CVE-2023-6478 tigervnc: xorg-x11-server: out-of-bounds memory read in RRChangeOutputProperty and RRChangeProviderProperty
-  Resolves: RHEL-18425
+  Resolves: RHEL-18426
 
-* Thu Nov 02 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3
+* Wed Nov 01 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-4
 - Fix CVE-2023-5380 tigervnc: xorg-x11-server: Use-after-free bug in DestroyWindow
+  Resolves: RHEL-15237
+
 - Fix CVE-2023-5367 tigervnc: xorg-x11-server: Out-of-bounds write in XIChangeDeviceProperty/RRChangeOutputProperty
-  Resolves: RHEL-15233
+  Resolves: RHEL-15249
+
+* Mon Oct 09 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-3
+- Support username alias in PlainUsers
+  Resolves: RHEL-8430
 
 * Tue Apr 11 2023 Jan Grulich <jgrulich@redhat.com> - 1.13.1-2
 - xorg-x11-server: X.Org Server Overlay Window Use-After-Free Local Privilege
