@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.13.1
-Release:        8%{?dist}
+Release:        10%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -39,9 +39,7 @@ Patch100:       tigervnc-xserver120.patch
 Patch101:       0001-rpath-hack.patch
 
 # XServer patches
-# CVE-2024-0229
-# https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1251
-Patch200:       xorg-CVE-2024-0229-followup.patch
+Patch200:       xorg-CVE-2024-31083-followup.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -189,7 +187,7 @@ for all in `find . -type f -perm -001`; do
 done
 %patch100 -p1 -b .xserver120-rebased
 %patch101 -p1 -b .rpath
-%patch200 -p1 -b .xorg-CVE-2024-0229-followup
+%patch200 -p1 -b .xorg-CVE-2024-31083-followup
 popd
 
 %patch1 -p1 -b .use-gnome-as-default-session
@@ -356,6 +354,20 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Mon Apr 15 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-10
+- Drop patches that are already part of xorg-x11-server
+  Resolves: RHEL-30755
+  Resolves: RHEL-30767
+  Resolves: RHEL-30761
+
+* Thu Apr 04 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-9
+- Fix CVE-2024-31080 tigervnc: xorg-x11-server: Heap buffer overread/data leakage in ProcXIGetSelectedEvents
+  Resolves: RHEL-30755
+- Fix CVE-2024-31083 tigervnc: xorg-x11-server: User-after-free in ProcRenderAddGlyphs
+  Resolves: RHEL-30767
+- Fix CVE-2024-31081 tigervnc: xorg-x11-server: Heap buffer overread/data leakage in ProcXIPassiveGrabDevice
+  Resolves: RHEL-30761
+
 * Wed Feb 07 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-8
 - Fix copy/paste error in the DeviceStateNotify
   Resolves: RHEL-20530
