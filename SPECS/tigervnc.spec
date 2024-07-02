@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.13.1
-Release:        10%{?dist}
+Release:        11%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -29,6 +29,7 @@ Patch3:         tigervnc-dont-install-appstream-metadata-file.patch
 # Upstream patches
 Patch50:        tigervnc-support-username-alias-in-plainusers.patch
 Patch51:        tigervnc-use-dup-to-get-available-fd-for-inetd.patch
+Patch52:        tigervnc-add-option-to-force-view-only-remote-connections.patch
 
 # Upstreamable patches
 Patch80:        tigervnc-dont-get-pointer-position-for-floating-device.patch
@@ -197,6 +198,7 @@ popd
 # Upstream patches
 %patch50 -p1 -b .support-username-alias-in-plainusers
 %patch51 -p1 -b .use-dup-to-get-available-fd-for-inetd
+%patch52 -p1 -b .add-option-to-force-view-only-remote-connections
 
 # Upstreamable patches
 %patch80 -p1 -b .dont-get-pointer-position-for-floating-device
@@ -354,6 +356,10 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Tue May 28 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-11
+- vncconfig: add option to force view-only remote client connections
+  Resolves: RHEL-11908
+
 * Mon Apr 15 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-10
 - Drop patches that are already part of xorg-x11-server
   Resolves: RHEL-30755
