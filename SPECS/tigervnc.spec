@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.13.1
-Release:        11%{?dist}
+Release:        12%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -40,7 +40,6 @@ Patch100:       tigervnc-xserver120.patch
 Patch101:       0001-rpath-hack.patch
 
 # XServer patches
-Patch200:       xorg-CVE-2024-31083-followup.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -188,7 +187,6 @@ for all in `find . -type f -perm -001`; do
 done
 %patch100 -p1 -b .xserver120-rebased
 %patch101 -p1 -b .rpath
-%patch200 -p1 -b .xorg-CVE-2024-31083-followup
 popd
 
 %patch1 -p1 -b .use-gnome-as-default-session
@@ -356,6 +354,10 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Fri Jul 12 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-12
+- Fix FTBS: drop already applied Xorg patches
+  Resolves: RHEL-46696
+
 * Tue May 28 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-11
 - vncconfig: add option to force view-only remote client connections
   Resolves: RHEL-11908
