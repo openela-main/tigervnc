@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.13.1
-Release:        12%{?dist}
+Release:        13%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -30,6 +30,7 @@ Patch3:         tigervnc-dont-install-appstream-metadata-file.patch
 Patch50:        tigervnc-support-username-alias-in-plainusers.patch
 Patch51:        tigervnc-use-dup-to-get-available-fd-for-inetd.patch
 Patch52:        tigervnc-add-option-to-force-view-only-remote-connections.patch
+Patch53:        tigervnc-vncsession-use-bin-sh-when-shell-not-set.patch
 
 # Upstreamable patches
 Patch80:        tigervnc-dont-get-pointer-position-for-floating-device.patch
@@ -197,6 +198,7 @@ popd
 %patch50 -p1 -b .support-username-alias-in-plainusers
 %patch51 -p1 -b .use-dup-to-get-available-fd-for-inetd
 %patch52 -p1 -b .add-option-to-force-view-only-remote-connections
+%patch53 -p1 -b .tigervnc-vncsession-use-bin-sh-when-shell-not-set
 
 # Upstreamable patches
 %patch80 -p1 -b .dont-get-pointer-position-for-floating-device
@@ -354,6 +356,10 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Mon Aug 05 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-13
+- vncsession: use /bin/sh if the user shell is not set
+  Resolves: RHEL-52827
+
 * Fri Jul 12 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-12
 - Fix FTBS: drop already applied Xorg patches
   Resolves: RHEL-46696
