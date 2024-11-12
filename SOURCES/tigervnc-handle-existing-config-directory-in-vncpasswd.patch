@@ -1,0 +1,27 @@
+From 445e0230cf4e939dcc59caf5d5f001c2f7b04da6 Mon Sep 17 00:00:00 2001
+From: Pierre Ossman <ossman@cendio.se>
+Date: Thu, 15 Aug 2024 14:24:42 +0200
+Subject: [PATCH] Handle existing config directory in vncpasswd
+
+This fixes commit a79c33d.
+---
+ unix/vncpasswd/vncpasswd.cxx | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/unix/vncpasswd/vncpasswd.cxx b/unix/vncpasswd/vncpasswd.cxx
+index 6666955f1..9f794e129 100644
+--- a/unix/vncpasswd/vncpasswd.cxx
++++ b/unix/vncpasswd/vncpasswd.cxx
+@@ -213,8 +213,10 @@ int main(int argc, char** argv)
+       exit(1);
+     }
+     if (os::mkdir_p(configDir, 0777) == -1) {
+-      fprintf(stderr, "Could not create VNC config directory: %s\n", strerror(errno));
+-      exit(1);
++      if (errno != EEXIST) {
++        fprintf(stderr, "Could not create VNC config directory: %s\n", strerror(errno));
++        exit(1);
++      }
+     }
+     snprintf(fname, sizeof(fname), "%s/passwd", configDir);
+   }

@@ -1,0 +1,29 @@
+From 6d9017eeb364491cf2acdf1c7e61aee8dd198527 Mon Sep 17 00:00:00 2001
+From: Pierre Ossman <ossman@cendio.se>
+Date: Fri, 30 Aug 2024 16:15:09 +0200
+Subject: [PATCH] Correctly handle ZRLE cursors
+
+Cursor data has a depth of 32 bits and hence cannot use CPIXELs.
+
+This is a regression from baca73d.
+---
+ common/rfb/ZRLEDecoder.cxx | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/common/rfb/ZRLEDecoder.cxx b/common/rfb/ZRLEDecoder.cxx
+index 474fd6ca1..e274a697a 100644
+--- a/common/rfb/ZRLEDecoder.cxx
++++ b/common/rfb/ZRLEDecoder.cxx
+@@ -125,10 +125,10 @@ void ZRLEDecoder::zrleDecode(const Rect& r, rdr::InStream* is,
+   Pixel maxPixel = pf.pixelFromRGB((uint16_t)-1, (uint16_t)-1, (uint16_t)-1);
+   bool fitsInLS3Bytes = maxPixel < (1<<24);
+   bool fitsInMS3Bytes = (maxPixel & 0xff) == 0;
+-  bool isLowCPixel = (sizeof(T) == 4) &&
++  bool isLowCPixel = (sizeof(T) == 4) && (pf.depth <= 24) &&
+                      ((fitsInLS3Bytes && pf.isLittleEndian()) ||
+                       (fitsInMS3Bytes && pf.isBigEndian()));
+-  bool isHighCPixel = (sizeof(T) == 4) &&
++  bool isHighCPixel = (sizeof(T) == 4) && (pf.depth <= 24) &&
+                       ((fitsInLS3Bytes && pf.isBigEndian()) ||
+                        (fitsInMS3Bytes && pf.isLittleEndian()));
+ 

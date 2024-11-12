@@ -4,8 +4,8 @@
 %global modulename vncsession
 
 Name:           tigervnc
-Version:        1.13.1
-Release:        8%{?dist}.3
+Version:        1.14.0
+Release:        2%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -26,8 +26,11 @@ Patch1:         tigervnc-use-gnome-as-default-session.patch
 Patch2:         tigervnc-vncsession-restore-script-systemd-service.patch
 
 # Upstream patches
-Patch50:        tigervnc-support-username-alias-in-plainusers.patch
-Patch51:        tigervnc-use-dup-to-get-available-fd-for-inetd.patch
+Patch50:        tigervnc-vncsession-use-bin-sh-when-shell-not-set.patch
+Patch51:        tigervnc-add-missing-coma-in-default-security-type-list.patch
+Patch52:        tigervnc-vncsession-move-existing-log-to-log-old-if-present.patch
+Patch53:        tigervnc-handle-existing-config-directory-in-vncpasswd.patch
+Patch54:        tigervnc-correctly-handle-zrle-cursors.patch
 
 # Upstreamable patches
 Patch80:        tigervnc-dont-get-pointer-position-for-floating-device.patch
@@ -38,14 +41,7 @@ Patch100:       tigervnc-xserver120.patch
 Patch101:       0001-rpath-hack.patch
 
 # XServer patches
-# CVE-2024-0229
-# https://gitlab.freedesktop.org/xorg/xserver/-/merge_requests/1251
-Patch200:       xorg-CVE-2024-0229-followup.patch
-Patch201:       xorg-CVE-2024-31080.patch
-Patch202:       xorg-CVE-2024-31081.patch
-Patch203:       xorg-CVE-2024-31082.patch
-Patch204:       xorg-CVE-2024-31083.patch
-Patch205:       xorg-CVE-2024-31083-followup.patch
+
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -82,11 +78,13 @@ BuildRequires:  libXinerama-devel
 BuildRequires:  libXt-devel
 BuildRequires:  libXtst-devel
 BuildRequires:  libdrm-devel
+BuildRequires:  mesa-libgbm-devel
 BuildRequires:  libtool
 BuildRequires:  libxkbfile-devel
 BuildRequires:  libxshmfence-devel
 BuildRequires:  mesa-libGL-devel
-BuildRequires:  xorg-x11-font-utils
+BuildRequires:  pkgconfig(fontutil)
+BuildRequires:  pkgconfig(xkbcomp)
 BuildRequires:  xorg-x11-server-devel
 BuildRequires:  xorg-x11-server-source
 BuildRequires:  xorg-x11-util-macros
@@ -193,25 +191,24 @@ pushd unix/xserver
 for all in `find . -type f -perm -001`; do
         chmod -x "$all"
 done
-%patch100 -p1 -b .xserver120-rebased
-%patch101 -p1 -b .rpath
-%patch200 -p1 -b .xorg-CVE-2024-0229-followup
-%patch201 -p1 -b .xorg-CVE-2024-31080.patch
-%patch202 -p1 -b .xorg-CVE-2024-31081.patch
-%patch203 -p1 -b .xorg-CVE-2024-31082.patch
-%patch204 -p1 -b .xorg-CVE-2024-31083.patch
-%patch205 -p1 -b .xorg-CVE-2024-31083-followup
+# Xorg patches
+%patch -P100 -p1 -b .xserver120-rebased
+%patch -P101 -p1 -b .rpath
 popd
 
-%patch1 -p1 -b .use-gnome-as-default-session
-%patch2 -p1 -b .vncsession-restore-script-systemd-service
+# Tigervnc patches
+%patch -P1 -p1 -b .use-gnome-as-default-session
+%patch -P2 -p1 -b .vncsession-restore-script-systemd-service
 
 # Upstream patches
-%patch50 -p1 -b .support-username-alias-in-plainusers
-%patch51 -p1 -b .use-dup-to-get-available-fd-for-inetd
+%patch -P50 -p1 -b .vncsession-use-bin-sh-when-shell-not-set
+%patch -P51 -p1 -b .add-missing-coma-in-default-security-type-list
+%patch -P52 -p1 -b .vncsession-move-existing-log-to-log-old-if-present
+%patch -P53 -p1 -b .handle-existing-config-directory-in-vncpasswd
+%patch -P54 -p1 -b .correctly-handle-zrle-cursors.patch
 
 # Upstreamable patches
-%patch80 -p1 -b .dont-get-pointer-position-for-floating-device
+%patch -P80 -p1 -b .dont-get-pointer-position-for-floating-device
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -244,11 +241,10 @@ autoreconf -fiv
         --with-fontdir=%{_datadir}/X11/fonts \
         --with-xkb-output=%{_localstatedir}/lib/xkb \
         --enable-install-libxf86config \
-        --enable-glx --disable-dri --enable-dri2 --disable-dri3 \
+        --enable-glx --disable-dri --enable-dri2 --enable-dri3 \
         --disable-unit-tests \
         --disable-config-hal \
         --disable-config-udev \
-        --with-dri-driver-path=%{_libdir}/dri \
         --without-dtrace \
         --disable-devel-docs \
         --disable-selective-werror
@@ -394,20 +390,29 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
-* Mon Apr 22 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-8.3
-- Rebuild (z-stream target)
-  Resolves: RHEL-30985
-  Resolves: RHEL-31015
+* Tue Jul 23 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.0-2
+- 1.14.0
+  Resolves: RHEL-45316
+- Move old log to log.old if present
+  Resolves: RHEL-54294
+- Fix shared memory leak
+  Resolves: RHEL-55768
 
-* Fri Apr 12 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-8.2
-- Fix crash caused by fix for CVE-2024-31083
-  Resolves: RHEL-30985
+* Mon Aug 05 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-11
+- vncsession: use /bin/sh if the user shell is not set
+  Resolves: RHEL-50679
 
-* Thu Apr 04 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-8.1
+* Tue May 28 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-10
+- vncconfig: add option to force view-only remote client connections
+  Resolves: RHEL-12144
+
+* Tue Apr 16 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-9
 - Fix CVE-2024-31080 tigervnc: xorg-x11-server: Heap buffer overread/data leakage in ProcXIGetSelectedEvents
-  Resolves: RHEL-31015
+  Resolves: RHEL-30756
 - Fix CVE-2024-31083 tigervnc: xorg-x11-server: User-after-free in ProcRenderAddGlyphs
-  Resolves: RHEL-30985
+  Resolves: RHEL-30768
+- Fix CVE-2024-31081 tigervnc: xorg-x11-server: Heap buffer overread/data leakage in ProcXIPassiveGrabDevice
+  Resolves: RHEL-30762
 
 * Wed Feb 07 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-8
 - Fix copy/paste error in the DeviceStateNotify
