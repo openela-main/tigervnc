@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.13.1
-Release:        13%{?dist}
+Release:        14%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -186,22 +186,22 @@ pushd unix/xserver
 for all in `find . -type f -perm -001`; do
         chmod -x "$all"
 done
-%patch100 -p1 -b .xserver120-rebased
-%patch101 -p1 -b .rpath
+%patch -P100 -p1 -b .xserver120-rebased
+%patch -P101 -p1 -b .rpath
 popd
 
-%patch1 -p1 -b .use-gnome-as-default-session
-%patch2 -p1 -b .vncsession-restore-script-systemd-service
-%patch3 -p1 -b .dont-install-appstream-metadata-file.patch
+%patch -P1 -p1 -b .use-gnome-as-default-session
+%patch -P2 -p1 -b .vncsession-restore-script-systemd-service
+%patch -P3 -p1 -b .dont-install-appstream-metadata-file.patch
 
 # Upstream patches
-%patch50 -p1 -b .support-username-alias-in-plainusers
-%patch51 -p1 -b .use-dup-to-get-available-fd-for-inetd
-%patch52 -p1 -b .add-option-to-force-view-only-remote-connections
-%patch53 -p1 -b .tigervnc-vncsession-use-bin-sh-when-shell-not-set
+%patch -P50 -p1 -b .support-username-alias-in-plainusers
+%patch -P51 -p1 -b .use-dup-to-get-available-fd-for-inetd
+%patch -P52 -p1 -b .add-option-to-force-view-only-remote-connections
+%patch -P53 -p1 -b .tigervnc-vncsession-use-bin-sh-when-shell-not-set
 
 # Upstreamable patches
-%patch80 -p1 -b .dont-get-pointer-position-for-floating-device
+%patch -P80 -p1 -b .dont-get-pointer-position-for-floating-device
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -356,6 +356,10 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Thu Oct 31 2024 Jan Grulich <jgrulich@redhat.com>
+- Fix CVE-2024-9632: xorg-x11-server: heap-based buffer overflow privilege escalation vulnerability
+  Resolves: RHEL-61999
+
 * Mon Aug 05 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-13
 - vncsession: use /bin/sh if the user shell is not set
   Resolves: RHEL-52827
