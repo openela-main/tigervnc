@@ -4,8 +4,8 @@
 %global modulename vncsession
 
 Name:           tigervnc
-Version:        1.14.0
-Release:        2%{?dist}
+Version:        1.14.1
+Release:        1%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -23,14 +23,11 @@ Source5:        vncserver
 
 # Downstream patches
 Patch1:         tigervnc-use-gnome-as-default-session.patch
+# https://github.com/TigerVNC/tigervnc/pull/1425
 Patch2:         tigervnc-vncsession-restore-script-systemd-service.patch
 
 # Upstream patches
-Patch50:        tigervnc-vncsession-use-bin-sh-when-shell-not-set.patch
-Patch51:        tigervnc-add-missing-coma-in-default-security-type-list.patch
-Patch52:        tigervnc-vncsession-move-existing-log-to-log-old-if-present.patch
-Patch53:        tigervnc-handle-existing-config-directory-in-vncpasswd.patch
-Patch54:        tigervnc-correctly-handle-zrle-cursors.patch
+Patch50:        tigervnc-vncsession-move-existing-log-to-log-old-if-present.patch
 
 # Upstreamable patches
 Patch80:        tigervnc-dont-get-pointer-position-for-floating-device.patch
@@ -41,7 +38,7 @@ Patch100:       tigervnc-xserver120.patch
 Patch101:       0001-rpath-hack.patch
 
 # XServer patches
-
+Patch200:       xorg-CVE-2024-9632.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -91,7 +88,9 @@ BuildRequires:  xorg-x11-util-macros
 BuildRequires:  xorg-x11-xtrans-devel
 
 # SELinux
-BuildRequires:  libselinux-devel, selinux-policy-devel, systemd
+BuildRequires:  libselinux-devel
+BuildRequires:  selinux-policy-devel
+BuildRequires:  systemd
 
 Requires(post): coreutils
 Requires(postun):coreutils
@@ -194,6 +193,7 @@ done
 # Xorg patches
 %patch -P100 -p1 -b .xserver120-rebased
 %patch -P101 -p1 -b .rpath
+%patch -P200 -p1 -b .xorg-CVE-2024-9632
 popd
 
 # Tigervnc patches
@@ -201,11 +201,7 @@ popd
 %patch -P2 -p1 -b .vncsession-restore-script-systemd-service
 
 # Upstream patches
-%patch -P50 -p1 -b .vncsession-use-bin-sh-when-shell-not-set
-%patch -P51 -p1 -b .add-missing-coma-in-default-security-type-list
-%patch -P52 -p1 -b .vncsession-move-existing-log-to-log-old-if-present
-%patch -P53 -p1 -b .handle-existing-config-directory-in-vncpasswd
-%patch -P54 -p1 -b .correctly-handle-zrle-cursors.patch
+%patch -P50 -p1 -b .vncsession-move-existing-log-to-log-old-if-present
 
 # Upstreamable patches
 %patch -P80 -p1 -b .dont-get-pointer-position-for-floating-device
@@ -390,13 +386,11 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
-* Tue Jul 23 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.0-2
-- 1.14.0
-  Resolves: RHEL-45316
-- Move old log to log.old if present
-  Resolves: RHEL-54294
-- Fix shared memory leak
-  Resolves: RHEL-55768
+* Fri Nov 08 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.1-1
+- 1.14.1
+  Resolves: RHEL-66600
+- Fix CVE-2024-9632: xorg-x11-server: heap-based buffer overflow privilege escalation vulnerability
+  Resolves: RHEL-62000
 
 * Mon Aug 05 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-11
 - vncsession: use /bin/sh if the user shell is not set
