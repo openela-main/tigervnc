@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.13.1
-Release:        14%{?dist}
+Release:        15%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -41,6 +41,19 @@ Patch100:       tigervnc-xserver120.patch
 Patch101:       0001-rpath-hack.patch
 
 # XServer patches
+Patch200:       xorg-CVE-2025-26594.patch
+Patch201:       xorg-CVE-2025-26594-2.patch
+Patch202:       xorg-CVE-2025-26595.patch
+Patch203:       xorg-CVE-2025-26596.patch
+Patch204:       xorg-CVE-2025-26597.patch
+Patch205:       xorg-CVE-2025-26598.patch
+Patch206:       xorg-CVE-2025-26599.patch
+Patch207:       xorg-CVE-2025-26599-2.patch
+Patch208:       xorg-CVE-2025-26600.patch
+Patch209:       xorg-CVE-2025-26601.patch
+Patch210:       xorg-CVE-2025-26601-2.patch
+Patch211:       xorg-CVE-2025-26601-3.patch
+Patch212:       xorg-CVE-2025-26601-4.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -188,6 +201,19 @@ for all in `find . -type f -perm -001`; do
 done
 %patch -P100 -p1 -b .xserver120-rebased
 %patch -P101 -p1 -b .rpath
+%patch -P200 -p1 -b .xorg-CVE-2025-26594
+%patch -P201 -p1 -b .xorg-CVE-2025-26594-2
+%patch -P202 -p1 -b .xorg-CVE-2025-26595
+%patch -P203 -p1 -b .xorg-CVE-2025-26596
+%patch -P204 -p1 -b .xorg-CVE-2025-26597
+%patch -P205 -p1 -b .xorg-CVE-2025-26598
+%patch -P206 -p1 -b .xorg-CVE-2025-26599
+%patch -P207 -p1 -b .xorg-CVE-2025-26599-2
+%patch -P208 -p1 -b .xorg-CVE-2025-26600
+%patch -P209 -p1 -b .xorg-CVE-2025-26601
+%patch -P210 -p1 -b .xorg-CVE-2025-26601-2
+%patch -P211 -p1 -b .xorg-CVE-2025-26601-3
+%patch -P212 -p1 -b .xorg-CVE-2025-26601-4
 popd
 
 %patch -P1 -p1 -b .use-gnome-as-default-session
@@ -356,7 +382,26 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
-* Thu Oct 31 2024 Jan Grulich <jgrulich@redhat.com>
+
+* Wed Feb 26 2025 Jan Grulich <jgrulich@redhat.com> - 1.13.1-15
+- Fix CVE-2025-26594 xorg-x11-server Use-after-free of the root cursor
+  Resolves: RHEL-79397
+- Fix CVE-2025-26595 xorg-x11-server Buffer overflow in XkbVModMaskText()
+  Resolves: RHEL-79401
+- Fix CVE-2025-26596 xorg-x11-server Heap overflow in XkbWriteKeySyms()
+  Resolves: RHEL-79386
+- Fix CVE-2025-26597 xorg-x11-server Buffer overflow in XkbChangeTypesOfKey()
+  Resolves: RHEL-79380
+- Fix CVE-2025-26598 xorg-x11-server Out-of-bounds write in CreatePointerBarrierClient()
+  Resolves: RHEL-79369
+- Fix CVE-2025-26599 xorg-x11-server Use of uninitialized pointer in compRedirectWindow()
+  Resolves: RHEL-79364
+- Fix CVE-2025-26600 xorg-x11-server Use-after-free in PlayReleasedEvents()
+  Resolves: RHEL-79360
+- Fix CVE-2025-26601 xorg-x11-server Use-after-free in SyncInitTrigger()
+  Resolves: RHEL-79348
+
+* Thu Oct 31 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-14
 - Fix CVE-2024-9632: xorg-x11-server: heap-based buffer overflow privilege escalation vulnerability
   Resolves: RHEL-61999
 
