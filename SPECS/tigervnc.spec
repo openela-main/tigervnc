@@ -4,8 +4,8 @@
 %global modulename vncsession
 
 Name:           tigervnc
-Version:        1.13.1
-Release:        15%{?dist}
+Version:        1.15.0
+Release:        1%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -13,7 +13,7 @@ Summary:        A TigerVNC remote display system
 License:        GPLv2+
 URL:            http://www.tigervnc.com
 
-Source0:        %{name}-%{version}.tar.gz
+Source0:        https://github.com/TigerVNC/%{name}/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
 Source1:        xvnc.service
 Source2:        xvnc.socket
 Source3:        10-libvnc.conf
@@ -23,22 +23,18 @@ Source5:        vncserver
 
 # Downstream patches
 Patch1:         tigervnc-use-gnome-as-default-session.patch
+# https://github.com/TigerVNC/tigervnc/pull/1425
 Patch2:         tigervnc-vncsession-restore-script-systemd-service.patch
 Patch3:         tigervnc-dont-install-appstream-metadata-file.patch
 
 # Upstream patches
-Patch50:        tigervnc-support-username-alias-in-plainusers.patch
-Patch51:        tigervnc-use-dup-to-get-available-fd-for-inetd.patch
-Patch52:        tigervnc-add-option-to-force-view-only-remote-connections.patch
-Patch53:        tigervnc-vncsession-use-bin-sh-when-shell-not-set.patch
+Patch50:        tigervnc-add-selinux-policy-rules-allowing-create-dirs-under-root-dir.patch
+Patch51:        tigervnc-add-selinux-policy-rules-allowing-access-to-proc-sys-fs-nr-open.patch
 
 # Upstreamable patches
-Patch80:        tigervnc-dont-get-pointer-position-for-floating-device.patch
 
-# This is tigervnc-%%{version}/unix/xserver116.patch rebased on the latest xorg
-Patch100:       tigervnc-xserver120.patch
 # 1326867 - [RHEL7.3] GLX applications in an Xvnc session fails to start
-Patch101:       0001-rpath-hack.patch
+Patch100:       0001-rpath-hack.patch
 
 # XServer patches
 Patch200:       xorg-CVE-2025-26594.patch
@@ -90,18 +86,21 @@ BuildRequires:  libXinerama-devel
 BuildRequires:  libXt-devel
 BuildRequires:  libXtst-devel
 BuildRequires:  libdrm-devel
+BuildRequires:  mesa-libgbm-devel
 BuildRequires:  libtool
 BuildRequires:  libxkbfile-devel
 BuildRequires:  libxshmfence-devel
 BuildRequires:  mesa-libGL-devel
-BuildRequires:  xorg-x11-font-utils
+BuildRequires:  pkgconfig(fontutil)
+BuildRequires:  pkgconfig(xkbcomp)
 BuildRequires:  xorg-x11-server-devel
 BuildRequires:  xorg-x11-server-source
 BuildRequires:  xorg-x11-util-macros
 BuildRequires:  xorg-x11-xtrans-devel
 
 # SELinux
-BuildRequires:  libselinux-devel, selinux-policy-devel, systemd
+BuildRequires:  libselinux-devel
+BuildRequires:  selinux-policy-devel
 
 Requires(post): coreutils
 Requires(postun):coreutils
@@ -109,6 +108,7 @@ Requires(postun):coreutils
 Requires:       hicolor-icon-theme
 Requires:       tigervnc-license
 Requires:       tigervnc-icons
+Requires:       which
 
 %description
 Virtual Network Computing (VNC) is a remote display system which
@@ -139,11 +139,16 @@ X session.
 
 %package server-minimal
 Summary:        A minimal installation of TigerVNC server
-Requires(post): chkconfig
-Requires(preun):chkconfig
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+Requires(post): systemd
 
-Requires:       mesa-dri-drivers, xkeyboard-config, xorg-x11-xkb-utils
-Requires:       tigervnc-license, dbus-x11
+Requires:       dbus-x11
+Requires:       mesa-dri-drivers
+Requires:       tigervnc-license
+Requires:       xkbcomp
+Requires:       xkeyboard-config
 
 %description server-minimal
 The VNC system allows you to access the same desktop from a wide
@@ -199,8 +204,9 @@ pushd unix/xserver
 for all in `find . -type f -perm -001`; do
         chmod -x "$all"
 done
-%patch -P100 -p1 -b .xserver120-rebased
-%patch -P101 -p1 -b .rpath
+%patch -P100 -p1 -b .rpath
+cat ../xserver120.patch | patch -p1
+
 %patch -P200 -p1 -b .xorg-CVE-2025-26594
 %patch -P201 -p1 -b .xorg-CVE-2025-26594-2
 %patch -P202 -p1 -b .xorg-CVE-2025-26595
@@ -221,13 +227,10 @@ popd
 %patch -P3 -p1 -b .dont-install-appstream-metadata-file.patch
 
 # Upstream patches
-%patch -P50 -p1 -b .support-username-alias-in-plainusers
-%patch -P51 -p1 -b .use-dup-to-get-available-fd-for-inetd
-%patch -P52 -p1 -b .add-option-to-force-view-only-remote-connections
-%patch -P53 -p1 -b .tigervnc-vncsession-use-bin-sh-when-shell-not-set
+%patch -P50 -p1 -b .add-selinux-policy-rules-allowing-create-dirs-under-root-dir
+%patch -P51 -p1 -b .add-selinux-policy-rules-allowing-access-to-proc-sys-fs-nr-open
 
 # Upstreamable patches
-%patch -P80 -p1 -b .dont-get-pointer-position-for-floating-device
 
 %build
 %ifarch sparcv9 sparc64 s390 s390x
@@ -235,7 +238,7 @@ export CFLAGS="$RPM_OPT_FLAGS -fPIC"
 %else
 export CFLAGS="$RPM_OPT_FLAGS -fpic"
 %endif
-export CXXFLAGS="$CFLAGS"
+export CXXFLAGS="$CFLAGS -std=c++11"
 
 %{cmake} .
 make %{?_smp_mflags}
@@ -246,15 +249,12 @@ autoreconf -fiv
         --disable-xorg --disable-xnest --disable-xvfb --disable-dmx \
         --disable-xwin --disable-xephyr --disable-kdrive --disable-xwayland \
         --with-pic --disable-static \
-        --with-default-font-path="catalogue:%{_sysconfdir}/X11/fontpath.d,built-ins" \
-        --with-fontdir=%{_datadir}/X11/fonts \
+        --with-default-font-path="catalogue:/etc/X11/fontpath.d,built-ins" \
         --with-xkb-output=%{_localstatedir}/lib/xkb \
-        --enable-install-libxf86config \
-        --enable-glx --disable-dri --enable-dri2 --disable-dri3 \
+        --enable-glx --disable-dri --enable-dri2 --enable-dri3 \
         --disable-unit-tests \
         --disable-config-hal \
         --disable-config-udev \
-        --with-dri-driver-path=%{_libdir}/dri \
         --without-dtrace \
         --disable-devel-docs \
         --disable-selective-werror
@@ -288,6 +288,8 @@ popd
 # Install systemd unit file
 install -m644 %{SOURCE1} %{buildroot}%{_unitdir}/xvnc@.service
 install -m644 %{SOURCE2} %{buildroot}%{_unitdir}/xvnc.socket
+# Install old vncserver script
+install -m 755 %{SOURCE5} %{buildroot}/%{_bindir}/vncserver
 
 # Install desktop stuff
 mkdir -p %{buildroot}%{_datadir}/icons/hicolor/{16x16,24x24,48x48}/apps
@@ -298,7 +300,6 @@ install -m644 tigervnc_$s.png %{buildroot}%{_datadir}/icons/hicolor/${s}x$s/apps
 done
 popd
 
-install -m 755 %{SOURCE5} %{buildroot}/%{_bindir}/vncserver
 
 %find_lang %{name} %{name}.lang
 
@@ -309,15 +310,14 @@ mkdir -p %{buildroot}%{_sysconfdir}/X11/xorg.conf.d/
 install -m 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/X11/xorg.conf.d/10-libvnc.conf
 
 %post server
-%systemd_post xvnc.service
+%systemd_post xvnc@.service
 %systemd_post xvnc.socket
 
 %preun server
-%systemd_preun xvnc.service
 %systemd_preun xvnc.socket
 
 %postun server
-%systemd_postun xvnc.service
+%systemd_postun xvnc@.service
 %systemd_postun xvnc.socket
 
 %pre selinux
@@ -348,8 +348,8 @@ fi
 %{_unitdir}/vncserver@.service
 %{_unitdir}/xvnc@.service
 %{_unitdir}/xvnc.socket
-%{_bindir}/x0vncserver
 %{_bindir}/vncserver
+%{_bindir}/x0vncserver
 %{_sbindir}/vncsession
 %{_libexecdir}/vncserver
 %{_libexecdir}/vncsession-start
@@ -369,7 +369,7 @@ fi
 
 %files server-module
 %{_libdir}/xorg/modules/extensions/libvnc.so
-%config %{_sysconfdir}/X11/xorg.conf.d/10-libvnc.conf
+%config(noreplace) %{_sysconfdir}/X11/xorg.conf.d/10-libvnc.conf
 
 %files license
 %{_docdir}/tigervnc/LICENCE.TXT
@@ -382,6 +382,10 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Wed Feb 26 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-1
+- 1.15.0
+  Resolves: RHEL-79161
+  Resolves: RHEL-79982
 
 * Wed Feb 26 2025 Jan Grulich <jgrulich@redhat.com> - 1.13.1-15
 - Fix CVE-2025-26594 xorg-x11-server Use-after-free of the root cursor
