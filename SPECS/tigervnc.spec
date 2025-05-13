@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.14.1
-Release:        1%{?dist}.1
+Release:        5%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -25,9 +25,14 @@ Source5:        vncserver
 Patch1:         tigervnc-use-gnome-as-default-session.patch
 # https://github.com/TigerVNC/tigervnc/pull/1425
 Patch2:         tigervnc-vncsession-restore-script-systemd-service.patch
+# https://github.com/TigerVNC/tigervnc/pull/1792
+Patch3:         tigervnc-add-option-allowing-to-connect-only-user-owning-session.patch
 
 # Upstream patches
 Patch50:        tigervnc-vncsession-move-existing-log-to-log-old-if-present.patch
+Patch51:        tigervnc-add-clipboard-support-to-x0vncserver.patch
+Patch52:        tigervnc-do-proper-toplevel-window-setup-for-selection-window.patch
+Patch53:        tigervnc-avoid-invalid-xfree-for-xclasshint.patch
 
 # Upstreamable patches
 Patch80:        tigervnc-dont-get-pointer-position-for-floating-device.patch
@@ -38,20 +43,20 @@ Patch100:       tigervnc-xserver120.patch
 Patch101:       0001-rpath-hack.patch
 
 # XServer patches
-Patch200:       xorg-CVE-2024-9632.patch
-Patch201:       xorg-CVE-2025-26594.patch
-Patch202:       xorg-CVE-2025-26594-2.patch
-Patch203:       xorg-CVE-2025-26595.patch
-Patch204:       xorg-CVE-2025-26596.patch
-Patch205:       xorg-CVE-2025-26597.patch
-Patch206:       xorg-CVE-2025-26598.patch
-Patch207:       xorg-CVE-2025-26599.patch
-Patch208:       xorg-CVE-2025-26599-2.patch
-Patch209:       xorg-CVE-2025-26600.patch
-Patch210:       xorg-CVE-2025-26601.patch
-Patch211:       xorg-CVE-2025-26601-2.patch
-Patch212:       xorg-CVE-2025-26601-3.patch
-Patch213:       xorg-CVE-2025-26601-4.patch
+Patch200:       xorg-CVE-2025-26594.patch
+Patch201:       xorg-CVE-2025-26594-2.patch
+Patch202:       xorg-CVE-2025-26595.patch
+Patch203:       xorg-CVE-2025-26596.patch
+Patch204:       xorg-CVE-2025-26597.patch
+Patch205:       xorg-CVE-2025-26598.patch
+Patch206:       xorg-CVE-2025-26599.patch
+Patch207:       xorg-CVE-2025-26599-2.patch
+Patch208:       xorg-CVE-2025-26600.patch
+Patch209:       xorg-CVE-2025-26601.patch
+Patch210:       xorg-CVE-2025-26601-2.patch
+Patch211:       xorg-CVE-2025-26601-3.patch
+Patch212:       xorg-CVE-2025-26601-4.patch
+
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -103,7 +108,11 @@ BuildRequires:  xorg-x11-xtrans-devel
 # SELinux
 BuildRequires:  libselinux-devel
 BuildRequires:  selinux-policy-devel
-BuildRequires:  systemd
+
+# For RHEL-34880
+BuildRequires:  pkgconfig(dbus-1) >= 1.0
+BuildRequires:  pkgconfig(libsystemd) >= 209
+BuildRequires:  pkgconfig(libudev) >= 143
 
 Requires(post): coreutils
 Requires(postun):coreutils
@@ -206,28 +215,33 @@ done
 # Xorg patches
 %patch -P100 -p1 -b .xserver120-rebased
 %patch -P101 -p1 -b .rpath
-%patch -P200 -p1 -b .xorg-CVE-2024-9632
-%patch -P201 -p1 -b .xorg-CVE-2025-26594
-%patch -P202 -p1 -b .xorg-CVE-2025-26594-2
-%patch -P203 -p1 -b .xorg-CVE-2025-26595
-%patch -P204 -p1 -b .xorg-CVE-2025-26596
-%patch -P205 -p1 -b .xorg-CVE-2025-26597
-%patch -P206 -p1 -b .xorg-CVE-2025-26598
-%patch -P207 -p1 -b .xorg-CVE-2025-26599
-%patch -P208 -p1 -b .xorg-CVE-2025-26599-2
-%patch -P209 -p1 -b .xorg-CVE-2025-26600
-%patch -P210 -p1 -b .xorg-CVE-2025-26601
-%patch -P211 -p1 -b .xorg-CVE-2025-26601-2
-%patch -P212 -p1 -b .xorg-CVE-2025-26601-3
-%patch -P213 -p1 -b .xorg-CVE-2025-26601-4
+
+#Xorg CVEs
+%patch -P200 -p1 -b .xorg-CVE-2025-26594
+%patch -P201 -p1 -b .xorg-CVE-2025-26594-2
+%patch -P202 -p1 -b .xorg-CVE-2025-26595
+%patch -P203 -p1 -b .xorg-CVE-2025-26596
+%patch -P204 -p1 -b .xorg-CVE-2025-26597
+%patch -P205 -p1 -b .xorg-CVE-2025-26598
+%patch -P206 -p1 -b .xorg-CVE-2025-26599
+%patch -P207 -p1 -b .xorg-CVE-2025-26599-2
+%patch -P208 -p1 -b .xorg-CVE-2025-26600
+%patch -P209 -p1 -b .xorg-CVE-2025-26601
+%patch -P210 -p1 -b .xorg-CVE-2025-26601-2
+%patch -P211 -p1 -b .xorg-CVE-2025-26601-3
+%patch -P212 -p1 -b .xorg-CVE-2025-26601-4
 popd
 
 # Tigervnc patches
 %patch -P1 -p1 -b .use-gnome-as-default-session
 %patch -P2 -p1 -b .vncsession-restore-script-systemd-service
+%patch -P3 -p1 -b .add-option-allowing-to-connect-only-user-owning-session
 
 # Upstream patches
 %patch -P50 -p1 -b .vncsession-move-existing-log-to-log-old-if-present
+%patch -P51 -p1 -b .add-clipboard-support-to-x0vncserver
+%patch -P52 -p1 -b .do-proper-toplevel-window-setup-for-selection-window
+%patch -P53 -p1 -b .avoid-invalid-xfree-for-xclasshint
 
 # Upstreamable patches
 %patch -P80 -p1 -b .dont-get-pointer-position-for-floating-device
@@ -269,7 +283,9 @@ autoreconf -fiv
         --disable-config-udev \
         --without-dtrace \
         --disable-devel-docs \
-        --disable-selective-werror
+        --disable-selective-werror \
+        --enable-systemd-logind \
+        --enable-config-udev
 
 make %{?_smp_mflags}
 popd
@@ -412,29 +428,64 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
-* Wed Feb 26 2025 Jan Grulich <jgrulich@redhat.com> - 1.14.1-1.1
+* Wed Feb 26 2025 Jan Grulich <jgrulich@redhat.com> - 1.14.1-5
 - Fix CVE-2025-26594 xorg-x11-server Use-after-free of the root cursor
-  Resolves: RHEL-79406
+  Resolves: RHEL-80015
 - Fix CVE-2025-26595 xorg-x11-server Buffer overflow in XkbVModMaskText()
-  Resolves: RHEL-80018
+  Resolves: RHEL-80027
 - Fix CVE-2025-26596 xorg-x11-server Heap overflow in XkbWriteKeySyms()
-  Resolves: RHEL-79391
+  Resolves: RHEL-79395
 - Fix CVE-2025-26597 xorg-x11-server Buffer overflow in XkbChangeTypesOfKey()
-  Resolves: RHEL-80029
+  Resolves: RHEL-80035
 - Fix CVE-2025-26598 xorg-x11-server Out-of-bounds write in CreatePointerBarrierClient()
-  Resolves: RHEL-79374
+  Resolves: RHEL-79378
 - Fix CVE-2025-26599 xorg-x11-server Use of uninitialized pointer in compRedirectWindow()
-  Resolves: RHEL-80043
+  Resolves: RHEL-80047
 - Fix CVE-2025-26600 xorg-x11-server Use-after-free in PlayReleasedEvents()
-  Resolves: RHEL-80037
+  Resolves: RHEL-80041
 - Fix CVE-2025-26601 xorg-x11-server Use-after-free in SyncInitTrigger()
-  Resolves: RHEL-79353
+  Resolves: RHEL-79358
 
-* Fri Nov 08 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.1-1
-- 1.14.1
-  Resolves: RHEL-66600
+* Tue Jan 21 2025 Jan Grulich <jgrulich@redhat.com> - 1.14.1-4
+- Fix crash in clipboard support in x0vncserver
+  Resolves: RHEL-74216
+
+* Thu Jan 16 2025 Jan Grulich <jgrulich@redhat.com> - 1.14.1-3
+- Add clipboard support to x0vncserver
+  Resolves: RHEL-74216
+
+* Thu Oct 31 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.1-2
 - Fix CVE-2024-9632: xorg-x11-server: heap-based buffer overflow privilege escalation vulnerability
-  Resolves: RHEL-62000
+  Resolves: RHEL-62001
+
+* Wed Oct 23 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.1-1
+- 1.14.1
+  Resolves: RHEL-45316
+
+* Mon Oct 07 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.0-6
+- Make "ApproveLoggedUserOnly" to ignore "closing" sessions
+  Resolves: RHEL-34880
+
+* Fri Oct 04 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.0-5
+- Fix "ApproveLoggedUserOnly" option not working in some setups
+  Resolves: RHEL-34880
+
+* Fri Sep 27 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.0-4
+- Add option "ApproveLoggedUserOnly" allowing to connect only the user
+  owning the running session
+  Resolves: RHEL-34880
+
+* Wed Sep 04 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.0-3
+- Move old log to log.old if present (fix patch)
+  Resolves: RHEL-54294
+
+* Tue Aug 20 2024 Jan Grulich <jgrulich@redhat.com> - 1.14.0-2
+- 1.14.0
+  Resolves: RHEL-45316
+- Move old log to log.old if present
+  Resolves: RHEL-54294
+- Fix shared memory leak
+  Resolves: RHEL-55768
 
 * Mon Aug 05 2024 Jan Grulich <jgrulich@redhat.com> - 1.13.1-11
 - vncsession: use /bin/sh if the user shell is not set
