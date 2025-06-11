@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.15.0
-Release:        1%{?dist}
+Release:        5%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -26,10 +26,15 @@ Patch1:         tigervnc-use-gnome-as-default-session.patch
 # https://github.com/TigerVNC/tigervnc/pull/1425
 Patch2:         tigervnc-vncsession-restore-script-systemd-service.patch
 Patch3:         tigervnc-dont-install-appstream-metadata-file.patch
+# Only warn about passwords longer than 8 characters, but allow them to be used as in the past
+Patch4:         tigervnc-allow-use-of-passwords-longer-than-eight-characters.patch
+# https://github.com/TigerVNC/tigervnc/pull/1792
+Patch5:         tigervnc-add-option-allowing-to-connect-only-user-owning-session.patch
 
 # Upstream patches
 Patch50:        tigervnc-add-selinux-policy-rules-allowing-create-dirs-under-root-dir.patch
 Patch51:        tigervnc-add-selinux-policy-rules-allowing-access-to-proc-sys-fs-nr-open.patch
+Patch52:        tigervnc-dont-print-xvnc-banner-before-parsing-args.patch
 
 # Upstreamable patches
 
@@ -101,6 +106,11 @@ BuildRequires:  xorg-x11-xtrans-devel
 # SELinux
 BuildRequires:  libselinux-devel
 BuildRequires:  selinux-policy-devel
+
+# For RHEL-91104
+BuildRequires:  pkgconfig(dbus-1) >= 1.0
+BuildRequires:  pkgconfig(libsystemd) >= 209
+BuildRequires:  pkgconfig(libudev) >= 143
 
 Requires(post): coreutils
 Requires(postun):coreutils
@@ -225,10 +235,13 @@ popd
 %patch -P1 -p1 -b .use-gnome-as-default-session
 %patch -P2 -p1 -b .vncsession-restore-script-systemd-service
 %patch -P3 -p1 -b .dont-install-appstream-metadata-file.patch
+%patch -P4 -p1 -b .allow-use-of-passwords-longer-than-eight-characters
+%patch -P5 -p1 -b .add-option-allowing-to-connect-only-user-owning-session
 
 # Upstream patches
 %patch -P50 -p1 -b .add-selinux-policy-rules-allowing-create-dirs-under-root-dir
 %patch -P51 -p1 -b .add-selinux-policy-rules-allowing-access-to-proc-sys-fs-nr-open
+%patch -P52 -p1 -b .dont-print-xvnc-banner-before-parsing-args
 
 # Upstreamable patches
 
@@ -257,7 +270,9 @@ autoreconf -fiv
         --disable-config-udev \
         --without-dtrace \
         --disable-devel-docs \
-        --disable-selective-werror
+        --disable-selective-werror \
+        --enable-systemd-logind \
+        --enable-config-udev
 
 make %{?_smp_mflags}
 popd
@@ -382,6 +397,23 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Tue May 27 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-5
+- Fix broken authentication with x0vncserver
+  Resolves: RHEL-93729
+
+* Thu May 15 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-4
+- Add option "ApproveLoggedUserOnly" allowing to connect only the user
+  owning the running session
+  Resolves: RHEL-91104
+
+* Wed Apr 30 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-3
+- Only warn about 8 characters limit, but let it proceed
+  Resolves: RHEL-89430
+
+* Wed Apr 16 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-2
+- Fix inetd mode not working
+  Resolves: RHEL-86513
+
 * Wed Feb 26 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-1
 - 1.15.0
   Resolves: RHEL-79161
