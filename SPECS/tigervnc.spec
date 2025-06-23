@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.15.0
-Release:        5%{?dist}
+Release:        7%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -55,6 +55,12 @@ Patch209:       xorg-CVE-2025-26601.patch
 Patch210:       xorg-CVE-2025-26601-2.patch
 Patch211:       xorg-CVE-2025-26601-3.patch
 Patch212:       xorg-CVE-2025-26601-4.patch
+Patch213:       xorg-CVE-2025-49175.patch
+Patch214:       xorg-CVE-2025-49176-1.patch
+Patch215:       xorg-CVE-2025-49176-2.patch
+Patch216:       xorg-CVE-2025-49178.patch
+Patch217:       xorg-CVE-2025-49179.patch
+Patch218:       xorg-CVE-2025-49180.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -230,6 +236,12 @@ cat ../xserver120.patch | patch -p1
 %patch -P210 -p1 -b .xorg-CVE-2025-26601-2
 %patch -P211 -p1 -b .xorg-CVE-2025-26601-3
 %patch -P212 -p1 -b .xorg-CVE-2025-26601-4
+%patch -P213 -p1 -b .xorg-CVE-2025-49175
+%patch -P214 -p1 -b .xorg-CVE-2025-49176-1
+%patch -P215 -p1 -b .xorg-CVE-2025-49176-2
+%patch -P216 -p1 -b .xorg-CVE-2025-49178
+%patch -P217 -p1 -b .xorg-CVE-2025-49179
+%patch -P218 -p1 -b .xorg-CVE-2025-49180
 popd
 
 %patch -P1 -p1 -b .use-gnome-as-default-session
@@ -397,6 +409,22 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Wed Jun 18 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-7
+- Additional fix to CVE-2025-49176: xorg-x11-server: Integer Overflow in Big Requests Extension
+  Resolves: RHEL-97294
+
+* Tue Jun 17 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-6
+- Fix CVE-2025-49175: xorg-x11-server: Out-of-Bounds Read in X Rendering Extension Animated Cursors
+  Resolves: RHEL-97268
+- Fix CVE-2025-49176: xorg-x11-server: Integer Overflow in Big Requests Extension
+  Resolves: RHEL-97294
+- Fix CVE-2025-49178: xorg-x11-server: Unprocessed Client Request Due to Bytes to Ignore
+  Resolves: RHEL-97364
+- Fix CVE-2025-49179: xorg-x11-server: Integer overflow in X Record extension
+  Resolves: RHEL-97397
+- Fix CVE-2025-49180: xorg-x11-server: Integer Overflow in X Resize, Rotate and Reflect (RandR) Extension
+  Resolves: RHEL-97232
+
 * Tue May 27 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-5
 - Fix broken authentication with x0vncserver
   Resolves: RHEL-93729
