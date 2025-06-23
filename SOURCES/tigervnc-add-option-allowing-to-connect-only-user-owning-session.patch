@@ -1,4 +1,4 @@
-From 8ac9bf0c061666d89d345a3d7149e1ef9c771655 Mon Sep 17 00:00:00 2001
+From 69b0fd6d77ea5968bd815188ee2bda3d282ebc60 Mon Sep 17 00:00:00 2001
 From: Jan Grulich <jgrulich@redhat.com>
 Date: Mon, 29 Jul 2024 14:31:14 +0200
 Subject: [PATCH] Add option allowing to connect only the user owning the
@@ -10,15 +10,17 @@ This is expected to be used with 'plain' security type in combination
 with 'PlainUsers=*' option allowing everyone to connect to the session.
 ---
  common/rfb/VNCServerST.cxx            |   7 --
- unix/xserver/hw/vnc/XserverDesktop.cc | 120 +++++++++++++++++++++++++-
+ unix/x0vncserver/XDesktop.cxx         |   8 ++
+ unix/xserver/hw/vnc/XserverDesktop.cc | 137 ++++++++++++++++++++++++++
  unix/xserver/hw/vnc/XserverDesktop.h  |   7 ++
- 3 files changed, 126 insertions(+), 8 deletions(-)
+ unix/xserver/hw/vnc/Xvnc.man          |   7 ++
+ 5 files changed, 159 insertions(+), 7 deletions(-)
 
 diff --git a/common/rfb/VNCServerST.cxx b/common/rfb/VNCServerST.cxx
-index 3831812..736a563 100644
+index 35a8384..80fdb86 100644
 --- a/common/rfb/VNCServerST.cxx
 +++ b/common/rfb/VNCServerST.cxx
-@@ -696,13 +696,6 @@ void VNCServerST::queryConnection(VNCSConnectionST* client,
+@@ -699,13 +699,6 @@ void VNCServerST::queryConnection(VNCSConnectionST* client,
      return;
    }
  
@@ -32,8 +34,34 @@ index 3831812..736a563 100644
    // - Does the client have the right to bypass the query?
    if (client->accessCheck(AccessNoQuery))
    {
+diff --git a/unix/x0vncserver/XDesktop.cxx b/unix/x0vncserver/XDesktop.cxx
+index 1e52987..a87373b 100644
+--- a/unix/x0vncserver/XDesktop.cxx
++++ b/unix/x0vncserver/XDesktop.cxx
+@@ -30,6 +30,7 @@
+ 
+ #include <rfb/LogWriter.h>
+ #include <rfb/Exception.h>
++#include <rfb/ServerCore.h>
+ 
+ #include <x0vncserver/XDesktop.h>
+ 
+@@ -313,6 +314,13 @@ void XDesktop::queryConnection(network::Socket* sock,
+ {
+   assert(isRunning());
+ 
++  // - Are we configured to do queries?
++  if (!rfb::Server::queryConnect &&
++      !sock->requiresQuery()) {
++    server->approveConnection(sock, true, nullptr);
++    return;
++  }
++
+   // Someone already querying?
+   if (queryConnectSock) {
+     std::list<network::Socket*> sockets;
 diff --git a/unix/xserver/hw/vnc/XserverDesktop.cc b/unix/xserver/hw/vnc/XserverDesktop.cc
-index d4ee16b..fe86d36 100644
+index d4ee16b..e12b88c 100644
 --- a/unix/xserver/hw/vnc/XserverDesktop.cc
 +++ b/unix/xserver/hw/vnc/XserverDesktop.cc
 @@ -52,6 +52,11 @@
@@ -48,11 +76,10 @@ index d4ee16b..fe86d36 100644
  extern "C" {
  void vncSetGlueContext(int screenIndex);
  void vncPresentMscEvent(uint64_t id, uint64_t msc);
-@@ -71,7 +76,15 @@ IntParameter queryConnectTimeout("QueryConnectTimeout",
-                                  "Accept Connection dialog before "
+@@ -72,6 +77,15 @@ IntParameter queryConnectTimeout("QueryConnectTimeout",
                                   "rejecting the connection",
                                   10);
--
+ 
 +#ifdef HAVE_SYSTEMD_DAEMON
 +BoolParameter approveLoggedUserOnly
 +("ApproveLoggedUserOnly",
@@ -65,7 +92,7 @@ index d4ee16b..fe86d36 100644
  
  XserverDesktop::XserverDesktop(int screenIndex_,
                                 std::list<network::SocketListener*> listeners_,
-@@ -168,11 +181,134 @@ void XserverDesktop::init(rfb::VNCServer* vs)
+@@ -168,11 +182,134 @@ void XserverDesktop::init(rfb::VNCServer* vs)
    // ready state
  }
  
@@ -219,7 +246,7 @@ index e604295..aed188e 100644
                             std::list<network::SocketListener*>* sockets,
                             rfb::VNCServer* sockserv);
 diff --git a/unix/xserver/hw/vnc/Xvnc.man b/unix/xserver/hw/vnc/Xvnc.man
-index b9c429f..e4822f6 100644
+index b9c429f..5762125 100644
 --- a/unix/xserver/hw/vnc/Xvnc.man
 +++ b/unix/xserver/hw/vnc/Xvnc.man
 @@ -204,6 +204,13 @@ to allow any user to authenticate using this security type. Specify \fB%u\fP

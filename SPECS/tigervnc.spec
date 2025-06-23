@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.14.1
-Release:        5%{?dist}
+Release:        8%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -43,20 +43,12 @@ Patch100:       tigervnc-xserver120.patch
 Patch101:       0001-rpath-hack.patch
 
 # XServer patches
-Patch200:       xorg-CVE-2025-26594.patch
-Patch201:       xorg-CVE-2025-26594-2.patch
-Patch202:       xorg-CVE-2025-26595.patch
-Patch203:       xorg-CVE-2025-26596.patch
-Patch204:       xorg-CVE-2025-26597.patch
-Patch205:       xorg-CVE-2025-26598.patch
-Patch206:       xorg-CVE-2025-26599.patch
-Patch207:       xorg-CVE-2025-26599-2.patch
-Patch208:       xorg-CVE-2025-26600.patch
-Patch209:       xorg-CVE-2025-26601.patch
-Patch210:       xorg-CVE-2025-26601-2.patch
-Patch211:       xorg-CVE-2025-26601-3.patch
-Patch212:       xorg-CVE-2025-26601-4.patch
-
+Patch200:       xorg-CVE-2025-49175.patch
+Patch201:       xorg-CVE-2025-49176-1.patch
+Patch202:       xorg-CVE-2025-49176-2.patch
+Patch203:       xorg-CVE-2025-49178.patch
+Patch204:       xorg-CVE-2025-49179.patch
+Patch205:       xorg-CVE-2025-49180.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -215,21 +207,13 @@ done
 # Xorg patches
 %patch -P100 -p1 -b .xserver120-rebased
 %patch -P101 -p1 -b .rpath
-
-#Xorg CVEs
-%patch -P200 -p1 -b .xorg-CVE-2025-26594
-%patch -P201 -p1 -b .xorg-CVE-2025-26594-2
-%patch -P202 -p1 -b .xorg-CVE-2025-26595
-%patch -P203 -p1 -b .xorg-CVE-2025-26596
-%patch -P204 -p1 -b .xorg-CVE-2025-26597
-%patch -P205 -p1 -b .xorg-CVE-2025-26598
-%patch -P206 -p1 -b .xorg-CVE-2025-26599
-%patch -P207 -p1 -b .xorg-CVE-2025-26599-2
-%patch -P208 -p1 -b .xorg-CVE-2025-26600
-%patch -P209 -p1 -b .xorg-CVE-2025-26601
-%patch -P210 -p1 -b .xorg-CVE-2025-26601-2
-%patch -P211 -p1 -b .xorg-CVE-2025-26601-3
-%patch -P212 -p1 -b .xorg-CVE-2025-26601-4
+# Xorg CVEs
+%patch -P200 -p1 -b .xorg-CVE-2025-49175
+%patch -P201 -p1 -b .xorg-CVE-2025-49176-1
+%patch -P202 -p1 -b .xorg-CVE-2025-49176-2
+%patch -P203 -p1 -b .xorg-CVE-2025-49178
+%patch -P204 -p1 -b .xorg-CVE-2025-49179
+%patch -P205 -p1 -b .xorg-CVE-2025-49180
 popd
 
 # Tigervnc patches
@@ -428,6 +412,26 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Wed Jun 18 2025 Jan Grulich <jgrulich@redhat.com> - 1.14.1-8
+- Additional fix to CVE-2025-49176: xorg-x11-server: Integer Overflow in Big Requests Extension
+  Resolves: RHEL-97305
+
+* Tue Jun 17 2025 Jan Grulich <jgrulich@redhat.com> - 1.14.1-7
+- Fix CVE-2025-49175: xorg-x11-server: Out-of-Bounds Read in X Rendering Extension Animated Cursors
+  Resolves: RHEL-97287
+- Fix CVE-2025-49176: xorg-x11-server: Integer Overflow in Big Requests Extension
+  Resolves: RHEL-97305
+- Fix CVE-2025-49178: xorg-x11-server: Unprocessed Client Request Due to Bytes to Ignore
+  Resolves: RHEL-97380
+- Fix CVE-2025-49179: xorg-x11-server: Integer overflow in X Record extension
+  Resolves: RHEL-97415
+- Fix CVE-2025-49180: xorg-x11-server: Integer Overflow in X Resize, Rotate and Reflect (RandR) Extension
+  Resolves: RHEL-97430
+
+* Wed May 28 2025 Jan Grulich <jgrulich@redhat.com> - 1.14.1-6
+- Fix broken authentication with x0vncserver
+  Resolves: RHEL-93726
+
 * Wed Feb 26 2025 Jan Grulich <jgrulich@redhat.com> - 1.14.1-5
 - Fix CVE-2025-26594 xorg-x11-server Use-after-free of the root cursor
   Resolves: RHEL-80015
