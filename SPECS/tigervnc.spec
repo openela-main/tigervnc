@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.14.1
-Release:        8%{?dist}
+Release:        9%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -49,6 +49,13 @@ Patch202:       xorg-CVE-2025-49176-2.patch
 Patch203:       xorg-CVE-2025-49178.patch
 Patch204:       xorg-CVE-2025-49179.patch
 Patch205:       xorg-CVE-2025-49180.patch
+# CVE-2025-62229: Use-after-free in XPresentNotify structures creation
+Patch206:       xorg-CVE-2025-62229.patch
+# CVE-2025-62230: Use-after-free in Xkb client resource removal
+Patch207:       xorg-CVE-2025-62230-1.patch
+Patch208:       xorg-CVE-2025-62230-2.patch
+# CVE-2025-62231: Value overflow in Xkb extension XkbSetCompatMap()
+Patch209:       xorg-CVE-2025-62231.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -214,6 +221,10 @@ done
 %patch -P203 -p1 -b .xorg-CVE-2025-49178
 %patch -P204 -p1 -b .xorg-CVE-2025-49179
 %patch -P205 -p1 -b .xorg-CVE-2025-49180
+%patch -P206 -p1 -b .xorg-CVE-2025-62229
+%patch -P207 -p1 -b .xorg-CVE-2025-62230-1
+%patch -P208 -p1 -b .xorg-CVE-2025-62230-2
+%patch -P209 -p1 -b .xorg-CVE-2025-62231
 popd
 
 # Tigervnc patches
@@ -412,6 +423,16 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Fri Oct 31 2025 Jan Grulich <jgrulich@redhat.com> - 1.14.1-9
+- Fix CVE-2025-62229: xorg-x11-server: Use-after-free in XPresentNotify structures creation
+  Resolves: RHEL-119987
+
+- Fix CVE-2025-62230: xorg-x11-server: Use-after-free in Xkb client resource removal
+  Resolves: RHEL-120006
+
+- Fix CVE-2025-62231: xorg-x11-server: Value overflow in Xkb extension XkbSetCompatMap()
+  Resolves: RHEL-120769
+
 * Wed Jun 18 2025 Jan Grulich <jgrulich@redhat.com> - 1.14.1-8
 - Additional fix to CVE-2025-49176: xorg-x11-server: Integer Overflow in Big Requests Extension
   Resolves: RHEL-97305
