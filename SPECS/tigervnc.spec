@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.15.0
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -41,6 +41,13 @@ Patch52:        tigervnc-dont-print-xvnc-banner-before-parsing-args.patch
 Patch100:       0001-rpath-hack.patch
 
 # XServer patches
+# CVE-2025-62229: Use-after-free in XPresentNotify structures creation
+Patch200:       xorg-CVE-2025-62229.patch
+# CVE-2025-62230: Use-after-free in Xkb client resource removal
+Patch201:       xorg-CVE-2025-62230-1.patch
+Patch202:       xorg-CVE-2025-62230-2.patch
+# CVE-2025-62231: Value overflow in Xkb extension XkbSetCompatMap()
+Patch203:       xorg-CVE-2025-62231.patch
 
 
 BuildRequires:  make
@@ -203,6 +210,11 @@ for all in `find . -type f -perm -001`; do
 done
 %patch -P100 -p1 -b .rpath
 cat ../xserver120.patch | patch -p1
+
+%patch -P200 -p1 -b .xorg-CVE-2025-62229
+%patch -P201 -p1 -b .xorg-CVE-2025-62230-1
+%patch -P202 -p1 -b .xorg-CVE-2025-62230-2
+%patch -P203 -p1 -b .xorg-CVE-2025-62231
 popd
 
 # Tigervnc patches
@@ -398,6 +410,16 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Fri Oct 31 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-6
+- Fix CVE-2025-62229: xorg-x11-server: Use-after-free in XPresentNotify structures creation
+  Resolves: RHEL-119986
+
+- Fix CVE-2025-62230: xorg-x11-server: Use-after-free in Xkb client resource removal
+  Resolves: RHEL-120007
+
+- Fix CVE-2025-62231: xorg-x11-server: Value overflow in Xkb extension XkbSetCompatMap()
+  Resolves: RHEL-120768
+
 * Mon Jun 23 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-5
 - Fix CVE-2025-49175: xorg-x11-server: Out-of-Bounds Read in X Rendering Extension Animated Cursors
   Resolves: RHEL-97284
