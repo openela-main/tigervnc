@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.15.0
-Release:        8%{?dist}
+Release:        9%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -35,6 +35,8 @@ Patch5:         tigervnc-add-option-allowing-to-connect-only-user-owning-session
 Patch50:        tigervnc-add-selinux-policy-rules-allowing-create-dirs-under-root-dir.patch
 Patch51:        tigervnc-add-selinux-policy-rules-allowing-access-to-proc-sys-fs-nr-open.patch
 Patch52:        tigervnc-dont-print-xvnc-banner-before-parsing-args.patch
+# CVE-2026-34352
+Patch53:        tigervnc-prevent-other-users-reading-x0vncserver-screen.patch
 
 # Upstreamable patches
 
@@ -55,13 +57,17 @@ Patch209:       xorg-CVE-2025-26601.patch
 Patch210:       xorg-CVE-2025-26601-2.patch
 Patch211:       xorg-CVE-2025-26601-3.patch
 Patch212:       xorg-CVE-2025-26601-4.patch
-# CVE-2025-62229: Use-after-free in XPresentNotify structures creation
-Patch213:       xorg-CVE-2025-62229.patch
-# CVE-2025-62230: Use-after-free in Xkb client resource removal
-Patch214:       xorg-CVE-2025-62230-1.patch
-Patch215:       xorg-CVE-2025-62230-2.patch
-# CVE-2025-62231: Value overflow in Xkb extension XkbSetCompatMap()
-Patch216:       xorg-CVE-2025-62231.patch
+# CVE-2026-33999
+Patch213:       xorg-CVE-2026-33999.patch
+# CVE-2026-34000
+Patch214:       xorg-CVE-2026-34000.patch
+# CVE-2026-34001
+Patch215:       xorg-CVE-2026-34001.patch
+# CVE-2026-34002
+Patch216:       xorg-CVE-2026-34002.patch
+# CVE-2026-34003
+Patch217:       xorg-CVE-2026-34003-1.patch
+Patch218:       xorg-CVE-2026-34003-2.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -237,10 +243,12 @@ cat ../xserver120.patch | patch -p1
 %patch -P210 -p1 -b .xorg-CVE-2025-26601-2
 %patch -P211 -p1 -b .xorg-CVE-2025-26601-3
 %patch -P212 -p1 -b .xorg-CVE-2025-26601-4
-%patch -P213 -p1 -b .xorg-CVE-2025-62229
-%patch -P214 -p1 -b .xorg-CVE-2025-62230-1
-%patch -P215 -p1 -b .xorg-CVE-2025-62230-2
-%patch -P216 -p1 -b .xorg-CVE-2025-62231
+%patch -P213 -p1 -b .xorg-CVE-2026-33999
+%patch -P214 -p1 -b .xorg-CVE-2026-34000
+%patch -P215 -p1 -b .xorg-CVE-2026-34001
+%patch -P216 -p1 -b .xorg-CVE-2026-34002
+%patch -P217 -p1 -b .xorg-CVE-2026-34003-1
+%patch -P218 -p1 -b .xorg-CVE-2026-34003-2
 popd
 
 %patch -P1 -p1 -b .use-gnome-as-default-session
@@ -253,6 +261,7 @@ popd
 %patch -P50 -p1 -b .add-selinux-policy-rules-allowing-create-dirs-under-root-dir
 %patch -P51 -p1 -b .add-selinux-policy-rules-allowing-access-to-proc-sys-fs-nr-open
 %patch -P52 -p1 -b .dont-print-xvnc-banner-before-parsing-args
+%patch -P53 -p1 -b .prevent-other-users-reading-x0vncserver-screen
 
 # Upstreamable patches
 
@@ -408,6 +417,15 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Mon Apr 20 2026 Jan Grulich <jgrulich@redhat.com> - 1.15.0-9
+- Fix CVE-2026-33999, CVE-2026-34000, CVE-2026-34001, CVE-2026-34002,
+  CVE-2026-34003 xorg-x11-server: various XKB and XSYNC vulnerabilities
+  Resolves: RHEL-163203
+  Resolves: RHEL-163271
+  Resolves: RHEL-163257
+- Fix CVE-2026-34352
+  Resolves: RHEL-167760
+
 * Fri Oct 31 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-8
 - Fix CVE-2025-62229: xorg-x11-server: Use-after-free in XPresentNotify structures creation
   Resolves: RHEL-119979
