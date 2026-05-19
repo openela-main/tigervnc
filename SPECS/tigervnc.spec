@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.15.0
-Release:        6%{?dist}.1
+Release:        7%{?dist}.1
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -34,7 +34,6 @@ Patch4:         tigervnc-allow-use-of-passwords-longer-than-eight-characters.pat
 Patch50:        tigervnc-add-selinux-policy-rules-allowing-create-dirs-under-root-dir.patch
 Patch51:        tigervnc-add-selinux-policy-rules-allowing-access-to-proc-sys-fs-nr-open.patch
 Patch52:        tigervnc-dont-print-xvnc-banner-before-parsing-args.patch
-# CVE-2026-34352
 Patch53:        tigervnc-prevent-other-users-reading-x0vncserver-screen.patch
 
 # Upstreamable patches
@@ -43,6 +42,7 @@ Patch53:        tigervnc-prevent-other-users-reading-x0vncserver-screen.patch
 Patch100:       0001-rpath-hack.patch
 
 # XServer patches
+
 # CVE-2026-33999
 Patch200:       xorg-CVE-2026-33999.patch
 # CVE-2026-34000
@@ -215,7 +215,6 @@ for all in `find . -type f -perm -001`; do
 done
 %patch -P100 -p1 -b .rpath
 cat ../xserver120.patch | patch -p1
-
 %patch -P200 -p1 -b .xorg-CVE-2026-33999
 %patch -P201 -p1 -b .xorg-CVE-2026-34000
 %patch -P202 -p1 -b .xorg-CVE-2026-34001
@@ -234,6 +233,7 @@ popd
 %patch -P50 -p1 -b .add-selinux-policy-rules-allowing-create-dirs-under-root-dir
 %patch -P51 -p1 -b .add-selinux-policy-rules-allowing-access-to-proc-sys-fs-nr-open
 %patch -P52 -p1 -b .dont-print-xvnc-banner-before-parsing-args
+# CVE-2026-34352
 %patch -P53 -p1 -b .prevent-other-users-reading-x0vncserver-screen
 
 # Upstreamable patches
@@ -418,24 +418,24 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
-* Mon Apr 20 2026 Jan Grulich <jgrulich@redhat.com> - 1.15.0-6.1
+* Mon Apr 20 2026 Jan Grulich <jgrulich@redhat.com> - 1.15.0-7.1
 - Fix CVE-2026-33999, CVE-2026-34000, CVE-2026-34001, CVE-2026-34002,
   CVE-2026-34003 xorg-x11-server: various XKB and XSYNC vulnerabilities
-  Resolves: RHEL-163212
-  Resolves: RHEL-163280
-  Resolves: RHEL-163266
+  Resolves: RHEL-163213
+  Resolves: RHEL-163281
+  Resolves: RHEL-163267
 - Fix CVE-2026-34352
-  Resolves: RHEL-167769
+  Resolves: RHEL-167986
 
-* Fri Oct 31 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-6
+* Fri Oct 31 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-7
 - Fix CVE-2025-62229: xorg-x11-server: Use-after-free in XPresentNotify structures creation
-  Resolves: RHEL-119986
+  Resolves: RHEL-119989
 
 - Fix CVE-2025-62230: xorg-x11-server: Use-after-free in Xkb client resource removal
-  Resolves: RHEL-120007
+  Resolves: RHEL-120009
 
 - Fix CVE-2025-62231: xorg-x11-server: Value overflow in Xkb extension XkbSetCompatMap()
-  Resolves: RHEL-120768
+  Resolves: RHEL-120770
 
 * Mon Jun 23 2025 Jan Grulich <jgrulich@redhat.com> - 1.15.0-5
 - Fix CVE-2025-49175: xorg-x11-server: Out-of-Bounds Read in X Rendering Extension Animated Cursors
