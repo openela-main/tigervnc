@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.15.0
-Release:        9%{?dist}
+Release:        10%{?dist}
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -57,17 +57,6 @@ Patch209:       xorg-CVE-2025-26601.patch
 Patch210:       xorg-CVE-2025-26601-2.patch
 Patch211:       xorg-CVE-2025-26601-3.patch
 Patch212:       xorg-CVE-2025-26601-4.patch
-# CVE-2026-33999
-Patch213:       xorg-CVE-2026-33999.patch
-# CVE-2026-34000
-Patch214:       xorg-CVE-2026-34000.patch
-# CVE-2026-34001
-Patch215:       xorg-CVE-2026-34001.patch
-# CVE-2026-34002
-Patch216:       xorg-CVE-2026-34002.patch
-# CVE-2026-34003
-Patch217:       xorg-CVE-2026-34003-1.patch
-Patch218:       xorg-CVE-2026-34003-2.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -243,12 +232,6 @@ cat ../xserver120.patch | patch -p1
 %patch -P210 -p1 -b .xorg-CVE-2025-26601-2
 %patch -P211 -p1 -b .xorg-CVE-2025-26601-3
 %patch -P212 -p1 -b .xorg-CVE-2025-26601-4
-%patch -P213 -p1 -b .xorg-CVE-2026-33999
-%patch -P214 -p1 -b .xorg-CVE-2026-34000
-%patch -P215 -p1 -b .xorg-CVE-2026-34001
-%patch -P216 -p1 -b .xorg-CVE-2026-34002
-%patch -P217 -p1 -b .xorg-CVE-2026-34003-1
-%patch -P218 -p1 -b .xorg-CVE-2026-34003-2
 popd
 
 %patch -P1 -p1 -b .use-gnome-as-default-session
@@ -417,6 +400,10 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Wed Jun 17 2026 Jan Grulich <jgrulich@redhat.com> - 1.15.0-10
+- Rebuild for updated xorg-x11-server
+  Resolves: RHEL-183998
+
 * Mon Apr 20 2026 Jan Grulich <jgrulich@redhat.com> - 1.15.0-9
 - Fix CVE-2026-33999, CVE-2026-34000, CVE-2026-34001, CVE-2026-34002,
   CVE-2026-34003 xorg-x11-server: various XKB and XSYNC vulnerabilities
