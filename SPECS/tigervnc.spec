@@ -5,7 +5,7 @@
 
 Name:           tigervnc
 Version:        1.15.0
-Release:        7%{?dist}.1
+Release:        7%{?dist}.2
 Summary:        A TigerVNC remote display system
 
 %global _hardened_build 1
@@ -42,18 +42,6 @@ Patch53:        tigervnc-prevent-other-users-reading-x0vncserver-screen.patch
 Patch100:       0001-rpath-hack.patch
 
 # XServer patches
-
-# CVE-2026-33999
-Patch200:       xorg-CVE-2026-33999.patch
-# CVE-2026-34000
-Patch201:       xorg-CVE-2026-34000.patch
-# CVE-2026-34001
-Patch202:       xorg-CVE-2026-34001.patch
-# CVE-2026-34002
-Patch203:       xorg-CVE-2026-34002.patch
-# CVE-2026-34003
-Patch204:       xorg-CVE-2026-34003-1.patch
-Patch205:       xorg-CVE-2026-34003-2.patch
 
 BuildRequires:  make
 BuildRequires:  gcc-c++
@@ -215,12 +203,6 @@ for all in `find . -type f -perm -001`; do
 done
 %patch -P100 -p1 -b .rpath
 cat ../xserver120.patch | patch -p1
-%patch -P200 -p1 -b .xorg-CVE-2026-33999
-%patch -P201 -p1 -b .xorg-CVE-2026-34000
-%patch -P202 -p1 -b .xorg-CVE-2026-34001
-%patch -P203 -p1 -b .xorg-CVE-2026-34002
-%patch -P204 -p1 -b .xorg-CVE-2026-34003-1
-%patch -P205 -p1 -b .xorg-CVE-2026-34003-2
 popd
 
 # Tigervnc patches
@@ -418,6 +400,10 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_sharedstatedir}/selinux/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Tue Jun 16 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 1.15.0-7.2
+- Rebuild for updated xorg-x11-server
+  Resolves: RHEL-184003
+
 * Mon Apr 20 2026 Jan Grulich <jgrulich@redhat.com> - 1.15.0-7.1
 - Fix CVE-2026-33999, CVE-2026-34000, CVE-2026-34001, CVE-2026-34002,
   CVE-2026-34003 xorg-x11-server: various XKB and XSYNC vulnerabilities
